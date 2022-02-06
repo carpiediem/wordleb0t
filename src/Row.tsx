@@ -1,4 +1,5 @@
-import { Clue, clueClass, CluedLetter, clueWord } from "./clue";
+import { useState, useEffect } from "react";
+import { CluedLetter } from "./clue";
 
 export enum RowState {
   LockedIn,
@@ -9,45 +10,105 @@ export enum RowState {
 interface RowProps {
   rowState: RowState;
   wordLength: number;
-  cluedLetters: CluedLetter[];
-  annotation?: string;
+  word: string;
+  foundLetters: string[];
+  onLockIn: (rowClues: CluedLetter[]) => void;
+  onUndo: () => void;
 }
 
-export function Row(props: RowProps) {
-  const isLockedIn = props.rowState === RowState.LockedIn;
-  const isEditing = props.rowState === RowState.Editing;
-  const letterDivs = props.cluedLetters
-    .concat(Array(props.wordLength).fill({ clue: Clue.Absent, letter: "" }))
-    .slice(0, props.wordLength)
-    .map(({ clue, letter }, i) => {
-      let letterClass = "Row-letter";
-      if (isLockedIn && clue !== undefined) {
-        letterClass += " " + clueClass(clue);
+const letterClasses = [
+  "letter-unspecified",
+  "letter-absent",
+  "letter-elsewhere",
+  "letter-correct",
+];
+
+export function Row({
+  wordLength,
+  word = "",
+  foundLetters = [],
+  rowState,
+  onLockIn,
+  onUndo,
+}: RowProps) {
+  const [rowClues, setRowClues] = useState<number[]>(
+    Array.from(word).map((_) => -1)
+  );
+  const isEmpty = !word || rowClues.every((value) => value === -1);
+  const isLockable = !rowClues.includes(-1);
+  const isLockedIn = rowState === RowState.LockedIn;
+  const isEditing = rowState === RowState.Editing;
+
+  const handleClick = (i: number) => () => {
+    if (!isEditing) return;
+    const newLetterState = rowClues[i] === 2 ? -1 : rowClues[i] + 1;
+    setRowClues([
+      ...rowClues.slice(0, i),
+      newLetterState,
+      ...rowClues.slice(i + 1),
+    ]);
+  };
+
+  useEffect(() => {
+    const handleKeyDown = ({ key }: KeyboardEvent) => {
+      if (!isEditing || !/\d|Enter/.test(key)) return;
+      if (key === "Enter") {
+        onLockIn(rowClues.map((clue, i) => ({ clue, letter: word[i] })));
+        return;
       }
-      return (
-        <td
-          key={i}
-          className={letterClass}
-          aria-live={isEditing ? "assertive" : "off"}
-          aria-label={
-            isLockedIn
-              ? letter.toUpperCase() +
-                (clue === undefined ? "" : ": " + clueWord(clue))
-              : ""
-          }
-        >
-          {letter}
-        </td>
+
+      const i = parseInt(key, 10) - 1;
+
+      i >= 0 && i <= wordLength - 1 && handleClick(i)();
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  });
+
+  useEffect(() => {
+    isEmpty &&
+      setRowClues(
+        Array.from(word).map((_, index) => (foundLetters[index] ? 2 : -1))
       );
-    });
-  let rowClass = "Row";
-  if (isLockedIn) rowClass += " Row-locked-in";
+  }, [word, foundLetters, isEmpty]);
+
   return (
-    <tr className={rowClass}>
-      {letterDivs}
-      {props.annotation && (
-        <span className="Row-annotation">{props.annotation}</span>
-      )}
+    <tr className="Row">
+      {Array(wordLength)
+        .fill(null)
+        .map((_, i) => (
+          <td
+            key={i}
+            onClick={handleClick(i)}
+            className={`Row-letter ${letterClasses[rowClues[i] + 1]}`}
+          >
+            {word[i]}
+          </td>
+        ))}
+      <td>
+        {isEditing && (
+          <button
+            onClick={() =>
+              onLockIn(rowClues.map((clue, i) => ({ clue, letter: word[i] })))
+            }
+            disabled={!isLockable}
+          >
+            ✓
+          </button>
+        )}
+        {isLockedIn && (
+          <button
+            onClick={onUndo}
+            className="undo"
+            title="Undo this feedback and make changes"
+          >
+            ⎌
+          </button>
+        )}
+      </td>
     </tr>
   );
 }

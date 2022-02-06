@@ -105,3 +105,55 @@ export function violation(
   }
   return undefined;
 }
+
+export function toRegExp(clues: CluedLetter[][]) {
+  if (clues.length === 0) return /(?:)/;
+
+  const found = clues[0].map((_) => "");
+  const somewhere = [] as string[];
+  const nowhere = [] as string[];
+  const exclusions = clues[0].map((_) => [] as string[]);
+  clues.forEach((row) => {
+    row.forEach(({ clue, letter }, index) => {
+      if (clue === Clue.Correct) found[index] = letter;
+      if (clue === Clue.Elsewhere) {
+        exclusions[index].push(letter);
+        somewhere.push(letter);
+      }
+      if (clue === Clue.Absent) {
+        exclusions[index].push(letter);
+
+        if (
+          !row.some(
+            (otherPosition) =>
+              otherPosition.letter === letter && otherPosition.clue
+          )
+        ) {
+          nowhere.push(letter);
+        }
+      }
+    });
+  });
+
+  const nowherePattern = `(?=^[^${nowhere.join("")}]+$)`;
+  const somewherePattern = somewhere
+    .filter((letter: string) => !found.includes(letter))
+    .map((letter: string) => `(?=.*${letter})`)
+    .join("");
+  const byPositionPattern = exclusions
+    .map((letters, index) => {
+      return found[index] || (letters.length ? `[^${letters.join("")}]` : ".");
+    })
+    .join("");
+
+  return new RegExp(
+    [somewherePattern, nowherePattern, `(?=^${byPositionPattern}$)`].join("")
+  );
+}
+
+export const foundReducer = (agg: string[], cur: CluedLetter[]) => {
+  cur.forEach(({ clue, letter }, index) => {
+    if (clue === Clue.Correct) agg[index] = letter;
+  });
+  return agg;
+};

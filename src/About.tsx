@@ -1,5 +1,5 @@
-import { Clue } from "./clue";
-import { Row, RowState } from "./Row";
+// import { Clue } from "./clue";
+// import { Row, RowState } from "./Row";
 import { maxGuesses } from "./util";
 
 export function About() {
@@ -19,7 +19,7 @@ export function About() {
         After each guess, you get Mastermind-style feedback.
       </p>
       <hr />
-      <Row
+      {/* <Row
         rowState={RowState.LockedIn}
         wordLength={4}
         cluedLetters={[
@@ -28,7 +28,7 @@ export function About() {
           { clue: Clue.Correct, letter: "r" },
           { clue: Clue.Elsewhere, letter: "d" },
         ]}
-      />
+      /> */}
       <p>
         <b>W</b> and <b>O</b> aren't in the target word at all.
       </p>
@@ -48,7 +48,7 @@ export function About() {
       <p>
         Let's move the <b>D</b> in our next guess:
       </p>
-      <Row
+      {/* <Row
         rowState={RowState.LockedIn}
         wordLength={4}
         cluedLetters={[
@@ -69,7 +69,7 @@ export function About() {
           { clue: Clue.Correct, letter: "t" },
         ]}
         annotation={"Got it!"}
-      />
+      /> */}
       <p>
         Report issues{" "}
         <a href="https://github.com/lynn/hello-wordl/issues">here</a>, or tweet{" "}

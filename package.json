@@ -24,7 +24,9 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "freqs": "node src/getFrequencies.js > src/frequencies.json",
+    "rank": "node src/rankDictionary.js > src/dictionary-ranked.json"
   },
   "eslintConfig": {
     "extends": [
