@@ -1,9 +1,9 @@
 {
-  "short_name": "hello wordl",
-  "name": "hello wordl",
+  "short_name": "Wordlb0t",
+  "name": "Wordlb0t",
   "icons": [
     {
-      "src": "favicon.png",
+      "src": "bot.png",
       "sizes": "128x128",
       "type": "image/png"
     }
