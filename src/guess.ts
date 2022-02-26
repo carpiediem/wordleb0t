@@ -1,6 +1,5 @@
 import dictionary from "./dictionary-ranked.json";
 import targets from "./targets.json";
-import allClues from "./allClues.json";
 import { Clue, CluedLetter } from "./clue";
 
 type ScoredWord = {
@@ -126,5 +125,4 @@ export function makeGuess(
   console.log(result);
 
   return result.slice(0, 8).map(({ word }) => word);
-}
 }
