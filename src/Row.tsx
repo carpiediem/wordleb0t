@@ -43,7 +43,9 @@ export function Row({
   const isLockedIn = rowState === RowState.LockedIn;
   const isEditing = rowState === RowState.Editing;
 
-  isEditing && onChange(isLockable);
+  useEffect(() => {
+    isEditing && onChange(isLockable);
+  }, [onChange, isEditing, isLockable]);
 
   const handleClick = (i: number) => () => {
     if (!isEditing) return;
