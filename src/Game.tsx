@@ -67,7 +67,8 @@ function Game(props: GameProps) {
       window.ga("send", {
         hitType: "event",
         eventCategory: "End",
-        eventAction: "loss",
+        eventAction:
+          guesses.length === 6 ? "loss - six guesses" : "loss - no match",
         eventLabel: guesses.length,
       });
     } else {
