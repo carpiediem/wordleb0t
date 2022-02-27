@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { CluedLetter } from "./clue";
+import { Clue, CluedLetter } from "./clue";
 
 export enum RowState {
   LockedIn,
@@ -12,6 +12,7 @@ interface RowProps {
   wordLength: number;
   word: string;
   foundLetters: string[];
+  onChange: (isLockable: boolean) => void;
   onLockIn: (rowClues: CluedLetter[]) => void;
   onUndo: () => void;
 }
@@ -28,6 +29,7 @@ export function Row({
   word = "",
   foundLetters = [],
   rowState,
+  onChange,
   onLockIn,
   onUndo,
 }: RowProps) {
@@ -35,9 +37,13 @@ export function Row({
     Array.from(word).map((_) => -1)
   );
   const isEmpty = !word || rowClues.every((value) => value === -1);
-  const isLockable = !rowClues.includes(-1);
+  const isLockable = !!rowClues.length && !rowClues.includes(-1);
+  const isAboutToWin =
+    !!rowClues.length && !rowClues.every((clue) => clue === Clue.Correct);
   const isLockedIn = rowState === RowState.LockedIn;
   const isEditing = rowState === RowState.Editing;
+
+  isEditing && onChange(isLockable);
 
   const handleClick = (i: number) => () => {
     if (!isEditing) return;
@@ -95,8 +101,17 @@ export function Row({
               onLockIn(rowClues.map((clue, i) => ({ clue, letter: word[i] })))
             }
             disabled={!isLockable}
+            style={
+              !isLockable
+                ? {}
+                : {
+                    backgroundColor: isAboutToWin
+                      ? "rgb(84, 163, 84)"
+                      : "#195272",
+                  }
+            }
           >
-            ✓
+            ✔
           </button>
         )}
         {isLockedIn && (

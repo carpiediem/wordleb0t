@@ -53,10 +53,12 @@ export function toRegExp(clues: CluedLetter[][]) {
       return found[index] || (letters.length ? `[^${letters.join("")}]` : ".");
     })
     .join("");
-
-  return new RegExp(
+  const re = new RegExp(
     [somewherePattern, nowherePattern, `(?=^${byPositionPattern}$)`].join("")
   );
+
+  // console.log({ somewherePattern, nowherePattern, byPositionPattern, re });
+  return re;
 }
 
 function colorIs(colorClue: string, index: number, color: string): boolean {
@@ -96,8 +98,6 @@ export function colorToRegExp(word: string, colorClue: string) {
 }
 
 function score({ lettersRank, usageRank }: ScoredWord, guessIndex: number) {
-  console.log(guessIndex, dictionary.length, targets.length);
-
   return (
     dictionary.length -
     lettersRank +
@@ -122,7 +122,6 @@ export function makeGuess(
       score: score(scoredWord, clues.length),
     }))
     .sort((a, b) => (a.score > b.score ? -1 : 1));
-  console.log(result);
 
   return result.slice(0, 8).map(({ word }) => word);
 }

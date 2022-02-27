@@ -19,7 +19,9 @@ function Game(props: GameProps) {
   const [currentOptions, setCurrentOptions] = useState<string[]>([]);
   const [guesses, setGuesses] = useState<string[]>([]);
   const [clues, setClues] = useState<CluedLetter[][]>([]);
-  const [hint, setHint] = useState<string>("Check Wordlebot's guess");
+  const [hint, setHint] = useState<string>(
+    "Tap the letters to check Wordlebot's guess"
+  );
 
   const tableRef = useRef<HTMLTableElement>(null);
 
@@ -30,13 +32,22 @@ function Game(props: GameProps) {
     setGuesses([...guesses]);
   };
 
+  const handleRowChange = (isLockable: boolean) =>
+    setHint(
+      isLockable
+        ? "When the colors are right, tap the checkmark"
+        : "Tap the letters to check Wordlebot's guess"
+    );
+
   const handleLockIn = (rowClues: CluedLetter[]) => {
     const isWon = rowClues.every(({ clue }) => clue === Clue.Correct);
 
     if (isWon) {
       setGameState(GameState.Won);
-    } else if (guesses.length === 6) {
+      setHint("Play again?");
+    } else if (guesses.length === 6 || currentOptions.length === 0) {
       setGameState(GameState.Lost);
+      setHint("What was your word?");
     } else {
       setCurrentOptions(makeGuess(wordLength, [...clues, rowClues]));
       setClues((value) => [...value, rowClues]);
@@ -89,6 +100,7 @@ function Game(props: GameProps) {
           word={guesses[i] || ""}
           foundLetters={foundLetters}
           rowState={rowState}
+          onChange={handleRowChange}
           onLockIn={handleLockIn}
           onUndo={() => handleUndo(i)}
         />
@@ -99,7 +111,7 @@ function Game(props: GameProps) {
     <>
       <div className="Bot-container">
         <div className="bubble">
-          {gameState === GameState.Playing && (
+          {gameState === GameState.Playing && currentOptions.length && (
             <>
               <h2>I think it's</h2>
               <select onChange={handleSelect}>
@@ -111,7 +123,8 @@ function Game(props: GameProps) {
           )}
 
           {gameState === GameState.Won && <h2>I won!</h2>}
-          {gameState === GameState.Lost && <h2>Too bad...</h2>}
+          {gameState === GameState.Lost &&
+            (guesses.length === 6 ? <h2>Too bad...</h2> : <h2>I give up!</h2>)}
           {gameState !== GameState.Playing && (
             <button onClick={handleReset}>Let's play again</button>
           )}
