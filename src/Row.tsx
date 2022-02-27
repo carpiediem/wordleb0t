@@ -8,6 +8,7 @@ export enum RowState {
 }
 
 interface RowProps {
+  isPlaying: boolean;
   rowState: RowState;
   wordLength: number;
   word: string;
@@ -25,6 +26,7 @@ const letterClasses = [
 ];
 
 export function Row({
+  isPlaying,
   wordLength,
   word = "",
   foundLetters = [],
@@ -44,8 +46,8 @@ export function Row({
   const isEditing = rowState === RowState.Editing;
 
   useEffect(() => {
-    isEditing && onChange(isLockable);
-  }, [onChange, isEditing, isLockable]);
+    isPlaying && isEditing && onChange(isLockable);
+  }, [onChange, isPlaying, isEditing, isLockable]);
 
   const handleClick = (i: number) => () => {
     if (!isEditing) return;
@@ -97,7 +99,7 @@ export function Row({
           </td>
         ))}
       <td>
-        {isEditing && (
+        {isPlaying && isEditing && (
           <button
             onClick={() =>
               onLockIn(rowClues.map((clue, i) => ({ clue, letter: word[i] })))
@@ -116,7 +118,7 @@ export function Row({
             ✔
           </button>
         )}
-        {isLockedIn && (
+        {isPlaying && isLockedIn && (
           <button
             onClick={onUndo}
             className="undo"

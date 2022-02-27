@@ -45,6 +45,7 @@ function Game(props: GameProps) {
     if (isWon) {
       setGameState(GameState.Won);
       setHint("Play again?");
+      // <a>Share your result</a> or <a>challenge</a> a friend to do better
     } else if (guesses.length === 6 || currentOptions.length === 0) {
       setGameState(GameState.Lost);
       setHint("What was your word?");
@@ -99,6 +100,7 @@ function Game(props: GameProps) {
           wordLength={wordLength}
           word={guesses[i] || ""}
           foundLetters={foundLetters}
+          isPlaying={gameState === GameState.Playing}
           rowState={rowState}
           onChange={handleRowChange}
           onLockIn={handleLockIn}
