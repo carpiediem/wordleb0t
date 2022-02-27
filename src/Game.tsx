@@ -3,6 +3,8 @@ import { Row, RowState } from "./Row";
 import { Clue, CluedLetter, foundReducer } from "./clue";
 import { makeGuess } from "./guess";
 
+declare const window: { ga: (action: string, options: any) => void };
+
 enum GameState {
   Playing,
   Won,
@@ -22,6 +24,7 @@ function Game(props: GameProps) {
   const [hint, setHint] = useState<string>(
     "Tap the letters to check Wordlebot's guess"
   );
+  const [userWord, setUserWord] = useState("");
 
   const tableRef = useRef<HTMLTableElement>(null);
 
@@ -40,17 +43,35 @@ function Game(props: GameProps) {
     );
 
   const handleLockIn = (rowClues: CluedLetter[]) => {
+    if (gameState !== GameState.Playing) return;
+
     const isWon = rowClues.every(({ clue }) => clue === Clue.Correct);
+    const remainingOptions = makeGuess(wordLength, [...clues, rowClues]);
+    const isLost = guesses.length === 6 || remainingOptions.length === 0;
 
     if (isWon) {
       setGameState(GameState.Won);
       setHint("Play again?");
       // <a>Share your result</a> or <a>challenge</a> a friend to do better
-    } else if (guesses.length === 6 || currentOptions.length === 0) {
+
+      window.ga("send", {
+        hitType: "event",
+        eventCategory: "End",
+        eventAction: "win",
+        eventLabel: guesses.slice(-1),
+      });
+    } else if (isLost) {
       setGameState(GameState.Lost);
       setHint("What was your word?");
+
+      window.ga("send", {
+        hitType: "event",
+        eventCategory: "End",
+        eventAction: "loss",
+        eventLabel: guesses.length,
+      });
     } else {
-      setCurrentOptions(makeGuess(wordLength, [...clues, rowClues]));
+      setCurrentOptions(remainingOptions);
       setClues((value) => [...value, rowClues]);
     }
   };
@@ -72,6 +93,17 @@ function Game(props: GameProps) {
     const length = Number(e.target.value);
     setWordLength(length);
     setHint(`${length} letters`);
+  };
+
+  const handleUserWord = () => {
+    window.ga("send", {
+      hitType: "event",
+      eventCategory: "End",
+      eventAction: "specify",
+      eventLabel: userWord,
+    });
+
+    handleReset();
   };
 
   useEffect(() => {
@@ -113,7 +145,7 @@ function Game(props: GameProps) {
     <>
       <div className="Bot-container">
         <div className="bubble">
-          {gameState === GameState.Playing && currentOptions.length && (
+          {gameState === GameState.Playing && (
             <>
               <h2>I think it's</h2>
               <select onChange={handleSelect}>
@@ -155,6 +187,16 @@ function Game(props: GameProps) {
           <tbody>{tableRows}</tbody>
         </table>
         <p role="alert">{hint || `\u00a0`}</p>
+        {gameState === GameState.Lost && (
+          <form id="loss-feedback" onSubmit={handleUserWord}>
+            <input
+              value={userWord}
+              onChange={(e) => setUserWord(e.target.value)}
+              style={{ width: `` }}
+            />
+            <button type="submit">✔</button>
+          </form>
+        )}
       </div>
     </>
   );

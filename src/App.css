@@ -35,7 +35,8 @@ body {
   cursor: pointer;
 }
 
-.Row button {
+.Row button,
+#loss-feedback button {
   height: 30px;
   width: 30px;
   margin: 5px;
@@ -47,7 +48,8 @@ body {
   cursor: pointer;
 }
 
-.Row button:hover {
+.Row button:hover,
+#loss-feedback button:hover {
   box-shadow: 1px 1px 3px 1px #ababab;
 }
 
@@ -337,6 +339,19 @@ a:active {
 
 .top-right a + a {
   margin-inline-start: 8px;
+}
+
+#loss-feedback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#loss-feedback input {
+  width: 5em;
+  font-size: 2em;
+  font-weight: bold;
+  text-transform: uppercase;
 }
 
 /* $background: #ffffff;

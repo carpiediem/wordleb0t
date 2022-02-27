@@ -44,10 +44,11 @@ export function Row({
     !!rowClues.length && !rowClues.every((clue) => clue === Clue.Correct);
   const isLockedIn = rowState === RowState.LockedIn;
   const isEditing = rowState === RowState.Editing;
+  const isCallbackTriggered = isPlaying && isEditing;
 
   useEffect(() => {
-    isPlaying && isEditing && onChange(isLockable);
-  }, [onChange, isPlaying, isEditing, isLockable]);
+    isCallbackTriggered && onChange(isLockable);
+  }, [onChange, isCallbackTriggered, isLockable]);
 
   const handleClick = (i: number) => () => {
     if (!isEditing) return;
