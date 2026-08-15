@@ -1,7 +1,7 @@
 {
   "name": "wordleb0t",
   "version": "0.1.0",
-  "homepage": "https://wordleb0t.rslc.us",
+  "homepage": "https://carpiediem.github.io/wordleb0t/",
   "private": false,
   "dependencies": {
     "@testing-library/jest-dom": "^5.16.1",
@@ -18,6 +18,11 @@
     "typescript": "^4.5.4",
     "web-vitals": "^2.1.2"
   },
+  "devDependencies": {
+    "eslint": "^8.3.0",
+    "eslint-config-react-app": "^7.0.1",
+    "prettier": "^3.9.6"
+  },
   "scripts": {
     "predeploy": "npm run build",
     "deploy": "gh-pages -d build",
@@ -26,13 +31,24 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "freqs": "node src/getFrequencies.js > src/frequencies.json",
-    "rank": "node src/rankDictionary.js > src/dictionary-ranked.json"
+    "rank": "node src/rankDictionary.js > src/dictionary-ranked.json",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint src --ext .js,.jsx,.ts,.tsx",
+    "typecheck": "tsc --noEmit"
   },
   "eslintConfig": {
     "extends": [
       "react-app",
       "react-app/jest"
     ]
+  },
+  "prettier": {
+    "semi": true,
+    "trailingComma": "all",
+    "singleQuote": true,
+    "printWidth": 120,
+    "tabWidth": 2
   },
   "browserslist": {
     "production": [
