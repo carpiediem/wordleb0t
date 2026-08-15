@@ -1,17 +1,17 @@
 // import { Clue } from "./clue";
 // import { Row, RowState } from "./Row";
-import { maxGuesses } from "./util";
+import { maxGuesses } from './util';
 
 export function About() {
   return (
     <div className="App-about">
       <p>
-        <i>hello wordl</i> is a remake of the word game{" "}
+        <i>hello wordl</i> is a remake of the word game{' '}
         <a href="https://www.powerlanguage.co.uk/wordle/">
           <i>Wordle</i>
-        </a>{" "}
-        by <a href="https://twitter.com/powerlanguish">powerlanguage</a>, which
-        I think is based on the TV show <i>Lingo</i>.
+        </a>{' '}
+        by <a href="https://twitter.com/powerlanguish">powerlanguage</a>, which I think is based on the TV show{' '}
+        <i>Lingo</i>.
       </p>
       <p>
         You get {maxGuesses} tries to guess a target word.
@@ -33,14 +33,12 @@ export function About() {
         <b>W</b> and <b>O</b> aren't in the target word at all.
       </p>
       <p>
-        <b className={"green-bg"}>R</b> is correct! The third letter is{" "}
-        <b className={"green-bg"}>R</b>
+        <b className={'green-bg'}>R</b> is correct! The third letter is <b className={'green-bg'}>R</b>
         .<br />
         <strong>(There may still be a second R in the word.)</strong>
       </p>
       <p>
-        <b className={"yellow-bg"}>D</b> occurs <em>elsewhere</em> in the target
-        word.
+        <b className={'yellow-bg'}>D</b> occurs <em>elsewhere</em> in the target word.
         <br />
         <strong>(Perhaps more than once. 🤔)</strong>
       </p>
@@ -71,15 +69,13 @@ export function About() {
         annotation={"Got it!"}
       /> */}
       <p>
-        Report issues{" "}
-        <a href="https://github.com/lynn/hello-wordl/issues">here</a>, or tweet{" "}
+        Report issues <a href="https://github.com/lynn/hello-wordl/issues">here</a>, or tweet{' '}
         <a href="https://twitter.com/chordbug">@chordbug</a>.
       </p>
       <p>
         This game will be free and ad-free forever,
         <br />
-        but you can <a href="https://ko-fi.com/chordbug">buy me a coffee</a> if
-        you'd like.
+        but you can <a href="https://ko-fi.com/chordbug">buy me a coffee</a> if you'd like.
       </p>
     </div>
   );

@@ -2,7 +2,7 @@
 
 When you play [Wordle](https://www.powerlanguage.co.uk/wordle/), the computer picks the word and you guess. Wordleb0t flips the script and guesses the word that you choose.
 
-Play it [**here**](https://wordleb0t.rslc.us/).
+Play it [**here**](https://carpiediem.github.io/wordleb0t/).
 
 ## Introduction
 

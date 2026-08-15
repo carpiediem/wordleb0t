@@ -1,7 +1,7 @@
-import { ChangeEvent, useRef, useState, useEffect } from "react";
-import { Row, RowState } from "./Row";
-import { Clue, CluedLetter, foundReducer } from "./clue";
-import { makeGuess } from "./guess";
+import { ChangeEvent, useRef, useState, useEffect } from 'react';
+import { Row, RowState } from './Row';
+import { Clue, CluedLetter, foundReducer } from './clue';
+import { makeGuess } from './guess';
 
 declare const window: { ga: (action: string, options: any) => void };
 
@@ -21,10 +21,8 @@ function Game(props: GameProps) {
   const [currentOptions, setCurrentOptions] = useState<string[]>([]);
   const [guesses, setGuesses] = useState<string[]>([]);
   const [clues, setClues] = useState<CluedLetter[][]>([]);
-  const [hint, setHint] = useState<string>(
-    "Tap the letters to check Wordlebot's guess"
-  );
-  const [userWord, setUserWord] = useState("");
+  const [hint, setHint] = useState<string>("Tap the letters to check Wordlebot's guess");
+  const [userWord, setUserWord] = useState('');
 
   const tableRef = useRef<HTMLTableElement>(null);
 
@@ -36,11 +34,7 @@ function Game(props: GameProps) {
   };
 
   const handleRowChange = (isLockable: boolean) =>
-    setHint(
-      isLockable
-        ? "When the colors are right, tap the checkmark"
-        : "Tap the letters to check Wordlebot's guess"
-    );
+    setHint(isLockable ? 'When the colors are right, tap the checkmark' : "Tap the letters to check Wordlebot's guess");
 
   const handleLockIn = (rowClues: CluedLetter[]) => {
     if (gameState !== GameState.Playing) return;
@@ -51,24 +45,23 @@ function Game(props: GameProps) {
 
     if (isWon) {
       setGameState(GameState.Won);
-      setHint("Play again?");
+      setHint('Play again?');
       // <a>Share your result</a> or <a>challenge</a> a friend to do better
 
-      window.ga("send", {
-        hitType: "event",
-        eventCategory: "End",
-        eventAction: "win",
+      window.ga('send', {
+        hitType: 'event',
+        eventCategory: 'End',
+        eventAction: 'win',
         eventLabel: guesses.slice(-1),
       });
     } else if (isLost) {
       setGameState(GameState.Lost);
-      setHint("What was your word?");
+      setHint('What was your word?');
 
-      window.ga("send", {
-        hitType: "event",
-        eventCategory: "End",
-        eventAction:
-          guesses.length === 6 ? "loss - six guesses" : "loss - no match",
+      window.ga('send', {
+        hitType: 'event',
+        eventCategory: 'End',
+        eventAction: guesses.length === 6 ? 'loss - six guesses' : 'loss - no match',
         eventLabel: guesses.length,
       });
     } else {
@@ -97,10 +90,10 @@ function Game(props: GameProps) {
   };
 
   const handleUserWord = () => {
-    window.ga("send", {
-      hitType: "event",
-      eventCategory: "End",
-      eventAction: "specify",
+    window.ga('send', {
+      hitType: 'event',
+      eventCategory: 'End',
+      eventAction: 'specify',
       eventLabel: userWord,
     });
 
@@ -113,25 +106,19 @@ function Game(props: GameProps) {
 
   useEffect(() => {
     if (guesses.length > clues.length) return;
-    setGuesses((state = []) =>
-      currentOptions.length ? [...state, currentOptions[0]] : state
-    );
+    setGuesses((state = []) => (currentOptions.length ? [...state, currentOptions[0]] : state));
   }, [currentOptions, guesses.length, clues.length]);
 
   const tableRows = Array(props.maxGuesses)
     .fill(undefined)
     .map((_, i) => {
       const rowState =
-        i === guesses.length - 1
-          ? RowState.Editing
-          : i < guesses.length
-          ? RowState.LockedIn
-          : RowState.Pending;
+        i === guesses.length - 1 ? RowState.Editing : i < guesses.length ? RowState.LockedIn : RowState.Pending;
       return (
         <Row
           key={i}
           wordLength={wordLength}
-          word={guesses[i] || ""}
+          word={guesses[i] || ''}
           foundLetters={foundLetters}
           isPlaying={gameState === GameState.Playing}
           rowState={rowState}
@@ -158,11 +145,8 @@ function Game(props: GameProps) {
           )}
 
           {gameState === GameState.Won && <h2>I won!</h2>}
-          {gameState === GameState.Lost &&
-            (guesses.length === 6 ? <h2>Too bad...</h2> : <h2>I give up!</h2>)}
-          {gameState !== GameState.Playing && (
-            <button onClick={handleReset}>Let's play again</button>
-          )}
+          {gameState === GameState.Lost && (guesses.length === 6 ? <h2>Too bad...</h2> : <h2>I give up!</h2>)}
+          {gameState !== GameState.Playing && <button onClick={handleReset}>Let's play again</button>}
         </div>
         <img src="./bot.png" alt="bot" />
       </div>
@@ -179,22 +163,13 @@ function Game(props: GameProps) {
             onChange={handleLengthChange}
           ></input>
         </div>
-        <table
-          className="Game-rows"
-          tabIndex={0}
-          aria-label="Table of guesses"
-          ref={tableRef}
-        >
+        <table className="Game-rows" tabIndex={0} aria-label="Table of guesses" ref={tableRef}>
           <tbody>{tableRows}</tbody>
         </table>
         <p role="alert">{hint || `\u00a0`}</p>
         {gameState === GameState.Lost && (
           <form id="loss-feedback" onSubmit={handleUserWord}>
-            <input
-              value={userWord}
-              onChange={(e) => setUserWord(e.target.value)}
-              style={{ width: `` }}
-            />
+            <input value={userWord} onChange={(e) => setUserWord(e.target.value)} style={{ width: `` }} />
             <button type="submit">✔</button>
           </form>
         )}

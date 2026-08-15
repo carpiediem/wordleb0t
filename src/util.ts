@@ -1,4 +1,4 @@
-import dictionary from "./dictionary.json";
+import dictionary from './dictionary.json';
 
 export enum Difficulty {
   Normal,
@@ -23,7 +23,7 @@ export function urlParam(name: string): string | null {
   return new URLSearchParams(window.location.search).get(name);
 }
 
-export const seed = Number(urlParam("seed"));
+export const seed = Number(urlParam('seed'));
 const makeRandom = () => (seed ? mulberry32(seed) : () => Math.random());
 let random = makeRandom();
 
@@ -36,15 +36,12 @@ export function pick<T>(array: Array<T>): T {
 }
 
 // https://a11y-guidelines.orange.com/en/web/components-examples/make-a-screen-reader-talk/
-export function speak(
-  text: string,
-  priority: "polite" | "assertive" = "assertive"
-) {
-  var el = document.createElement("div");
-  var id = "speak-" + Date.now();
-  el.setAttribute("id", id);
-  el.setAttribute("aria-live", priority || "polite");
-  el.classList.add("sr-only");
+export function speak(text: string, priority: 'polite' | 'assertive' = 'assertive') {
+  var el = document.createElement('div');
+  var id = 'speak-' + Date.now();
+  el.setAttribute('id', id);
+  el.setAttribute('aria-live', priority || 'polite');
+  el.classList.add('sr-only');
   document.body.appendChild(el);
 
   window.setTimeout(function () {
@@ -57,11 +54,10 @@ export function speak(
 }
 
 export function ordinal(n: number): string {
-  return n + ([undefined, "st", "nd", "rd"][(n % 100 >> 3) ^ 1 && n % 10] || "th");
+  return n + ([undefined, 'st', 'nd', 'rd'][((n % 100) >> 3) ^ 1 && n % 10] || 'th');
 }
 
-export const englishNumbers =
-  "zero one two three four five six seven eight nine ten eleven".split(" ");
+export const englishNumbers = 'zero one two three four five six seven eight nine ten eleven'.split(' ');
 
 export function describeSeed(seed: number): string {
   const year = Math.floor(seed / 10000);
@@ -70,20 +66,13 @@ export function describeSeed(seed: number): string {
   const isLeap = year % (year % 25 ? 4 : 16) === 0;
   const feb = isLeap ? 29 : 28;
   const days = [0, 31, feb, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-  if (
-    year >= 2000 &&
-    year <= 2100 &&
-    month >= 1 &&
-    month <= 12 &&
-    day >= 1 &&
-    day <= days[month]
-  ) {
-    return new Date(year, month - 1, day).toLocaleDateString("en-US", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
+  if (year >= 2000 && year <= 2100 && month >= 1 && month <= 12 && day >= 1 && day <= days[month]) {
+    return new Date(year, month - 1, day).toLocaleDateString('en-US', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
     });
   } else {
-    return "seed " + seed;
+    return 'seed ' + seed;
   }
 }

@@ -1,5 +1,5 @@
-const dictionary = require("./dictionary.json");
-const frequencies = require("./frequencies.json");
+const dictionary = require('./dictionary.json');
+const frequencies = require('./frequencies.json');
 
 const score = (word) => {
   let freqSum = 0;
@@ -15,8 +15,6 @@ const score = (word) => {
 
 const rankedDictionary = dictionary
   .filter((word) => word.length >= 4 && word.length <= 11)
-  .sort((a, b) =>
-    a.length === b.length ? score(b) - score(a) : a.length - b.length
-  );
+  .sort((a, b) => (a.length === b.length ? score(b) - score(a) : a.length - b.length));
 
 console.log(JSON.stringify(rankedDictionary));

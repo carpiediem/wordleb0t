@@ -1,6 +1,6 @@
-import dictionary from "./dictionary-ranked.json";
-import targets from "./targets.json";
-import { Clue, CluedLetter } from "./clue";
+import dictionary from './dictionary-ranked.json';
+import targets from './targets.json';
+import { Clue, CluedLetter } from './clue';
 
 type ScoredWord = {
   word: string;
@@ -17,7 +17,7 @@ const scoredWords = dictionary.map((word, lettersRank) => ({
 export function toRegExp(clues: CluedLetter[][]) {
   if (clues.length === 0) return /(?:)/;
 
-  const found = clues[0].map((_) => "");
+  const found = clues[0].map((_) => '');
   const somewhere = [] as string[];
   const nowhere = [] as string[];
   const exclusions = clues[0].map((_) => [] as string[]);
@@ -31,31 +31,24 @@ export function toRegExp(clues: CluedLetter[][]) {
       if (clue === Clue.Absent) {
         exclusions[index].push(letter);
 
-        if (
-          !row.some(
-            (otherPosition) =>
-              otherPosition.letter === letter && otherPosition.clue
-          )
-        ) {
+        if (!row.some((otherPosition) => otherPosition.letter === letter && otherPosition.clue)) {
           nowhere.push(letter);
         }
       }
     });
   });
 
-  const nowherePattern = `(?=^[^${nowhere.join("")}]+$)`;
+  const nowherePattern = `(?=^[^${nowhere.join('')}]+$)`;
   const somewherePattern = somewhere
     .filter((letter: string) => !found.includes(letter))
     .map((letter: string) => `(?=.*${letter})`)
-    .join("");
+    .join('');
   const byPositionPattern = exclusions
     .map((letters, index) => {
-      return found[index] || (letters.length ? `[^${letters.join("")}]` : ".");
+      return found[index] || (letters.length ? `[^${letters.join('')}]` : '.');
     })
-    .join("");
-  const re = new RegExp(
-    [somewherePattern, nowherePattern, `(?=^${byPositionPattern}$)`].join("")
-  );
+    .join('');
+  const re = new RegExp([somewherePattern, nowherePattern, `(?=^${byPositionPattern}$)`].join(''));
 
   // console.log({ somewherePattern, nowherePattern, byPositionPattern, re });
   return re;
@@ -68,47 +61,30 @@ function colorIs(colorClue: string, index: number, color: string): boolean {
 export function colorToRegExp(word: string, colorClue: string) {
   const letters = Array.from(word);
 
-  const nowhere = letters.filter((letter, index) =>
-    colorIs(colorClue, index, "⬛") ? letter : ""
-  );
-  const found = letters.map((letter, index) =>
-    colorIs(colorClue, index, "🟩") ? letter : ""
-  );
-  const somewhere = letters.filter((letter, index) =>
-    colorIs(colorClue, index, "🟨") ? letter : ""
-  );
-  const exclusions = letters.map((letter, index) =>
-    colorIs(colorClue, index, "🟨") ? [letter] : []
-  );
+  const nowhere = letters.filter((letter, index) => (colorIs(colorClue, index, '⬛') ? letter : ''));
+  const found = letters.map((letter, index) => (colorIs(colorClue, index, '🟩') ? letter : ''));
+  const somewhere = letters.filter((letter, index) => (colorIs(colorClue, index, '🟨') ? letter : ''));
+  const exclusions = letters.map((letter, index) => (colorIs(colorClue, index, '🟨') ? [letter] : []));
 
-  const nowherePattern = `(?=^[^${nowhere.join("")}]+$)`;
+  const nowherePattern = `(?=^[^${nowhere.join('')}]+$)`;
   const somewherePattern = somewhere
     .filter((letter: string) => !found.includes(letter))
     .map((letter: string) => `(?=.*${letter})`)
-    .join("");
+    .join('');
   const byPositionPattern = exclusions
     .map((letters, index) => {
-      return found[index] || (letters.length ? `[^${letters.join("")}]` : ".");
+      return found[index] || (letters.length ? `[^${letters.join('')}]` : '.');
     })
-    .join("");
+    .join('');
 
-  return new RegExp(
-    [somewherePattern, nowherePattern, `(?=^${byPositionPattern}$)`].join("")
-  );
+  return new RegExp([somewherePattern, nowherePattern, `(?=^${byPositionPattern}$)`].join(''));
 }
 
 function score({ lettersRank, usageRank }: ScoredWord, guessIndex: number) {
-  return (
-    dictionary.length -
-    lettersRank +
-    (usageRank === -1 ? 0 : 0.5 * guessIndex * (targets.length - usageRank))
-  );
+  return dictionary.length - lettersRank + (usageRank === -1 ? 0 : 0.5 * guessIndex * (targets.length - usageRank));
 }
 
-export function makeGuess(
-  wordLength: number,
-  clues: CluedLetter[][] = []
-): string[] {
+export function makeGuess(wordLength: number, clues: CluedLetter[][] = []): string[] {
   const re = toRegExp(clues);
 
   if (clues.length === 0 && localStorage.INITIAL_GUESS?.length === wordLength) {

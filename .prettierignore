@@ -1,0 +1,8 @@
+/node_modules
+/build
+/coverage
+package-lock.json
+src/dictionary.json
+src/dictionary-ranked.json
+src/frequencies.json
+src/targets.json
