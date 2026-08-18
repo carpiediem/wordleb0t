@@ -1,6 +1,6 @@
 // import { Clue } from "./clue";
 // import { Row, RowState } from "./Row";
-import { maxGuesses } from './util';
+import { maxGuesses } from '../lib/util';
 
 export function About() {
   return (

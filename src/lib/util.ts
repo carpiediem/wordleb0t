@@ -1,4 +1,4 @@
-import dictionary from './dictionary.json';
+import dictionary from '../data/dictionary.json';
 
 export enum Difficulty {
   Normal,

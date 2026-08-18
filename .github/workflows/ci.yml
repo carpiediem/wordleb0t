@@ -39,7 +39,7 @@ jobs:
           fail_ci_if_error: false
 
   approve:
-    name: Approve pull request
+    name: Approve Dependabot pull requests
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: test
@@ -50,7 +50,7 @@ jobs:
           github-token: '${{ secrets.GITHUB_TOKEN }}'
 
   merge:
-    name: Merge pull request
+    name: Merge Dependabot pull requests
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: approve
