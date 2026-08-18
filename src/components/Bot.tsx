@@ -4,7 +4,7 @@ interface BotProps {
   isTalking: boolean;
 }
 
-export function Bot(props: BotProps) {
+export function Bot(_props: BotProps) {
   return (
     <div className="cute-robot-v1">
       <div className="circle-bg">

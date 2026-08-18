@@ -29,6 +29,9 @@ on:
       - 'vitest.nyt.config.mts'
       - '.github/workflows/nyt-answers.yml'
 
+permissions:
+  contents: write
+
 jobs:
   test-nyt-answers:
     name: Run guess logic against every NYT Wordle answer
@@ -41,7 +44,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20.x
+          node-version: 26.x
           cache: npm
 
       - name: NPM install
@@ -49,3 +52,21 @@ jobs:
 
       - name: Run simulation
         run: npm run test:nyt
+
+      - name: Update baseline on main
+        if: github.ref == 'refs/heads/main'
+        run: |
+          node .github/scripts/update-nyt-baseline.cjs
+          if git diff --quiet -- nyt-answers-baseline.json; then
+            echo "Baseline unchanged."
+          else
+            git config user.name 'github-actions[bot]'
+            git config user.email 'github-actions[bot]@users.noreply.github.com'
+            git add nyt-answers-baseline.json
+            git commit -m "Update NYT answers win-rate baseline [skip ci]"
+            git push
+          fi
+
+      - name: Compare against main and write summary
+        if: github.event_name == 'pull_request'
+        run: node .github/scripts/nyt-summary.cjs

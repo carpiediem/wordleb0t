@@ -1,7 +1,13 @@
+import { writeFileSync } from 'fs';
 import { describe, expect, it } from 'vitest';
 import { makeGuess } from './guess';
 import { clue, CluedLetter } from './clue';
 import answers from '../data/nytAnswers.json';
+
+// Where CI reads the current run's win rate from, to compare against the
+// committed baseline for main (see .github/workflows/nyt-answers.yml).
+// Gitignored - this is a fresh artifact of each run, not committed state.
+const WIN_RATE_OUTPUT_PATH = 'nyt-winrate.json';
 
 const WORD_LENGTH = 5;
 const MAX_GUESSES = 6;
@@ -20,11 +26,21 @@ function solve(answer: string): number | null {
   return null;
 }
 
-// Mimics the "STATISTICS" card NYT's Wordle shows players.
-function renderStatistics(results: (number | null)[]): string {
+interface Stats {
+  played: number;
+  wins: number;
+  winPct: number;
+  currentStreak: number;
+  maxStreak: number;
+  distribution: number[]; // count of wins in 1, 2, ..., MAX_GUESSES guesses
+  failures: string[];
+}
+
+function computeStats(answers: string[], results: (number | null)[]): Stats {
   const played = results.length;
   const wins = results.filter((result) => result !== null).length;
   const winPct = Math.round((wins / played) * 100);
+  const failures = answers.filter((_, index) => results[index] === null);
 
   let currentStreak = 0;
   let maxStreak = 0;
@@ -37,6 +53,13 @@ function renderStatistics(results: (number | null)[]): string {
     { length: MAX_GUESSES },
     (_, guessCount) => results.filter((result) => result === guessCount + 1).length,
   );
+
+  return { played, wins, winPct, currentStreak, maxStreak, distribution, failures };
+}
+
+// Mimics the "STATISTICS" card NYT's Wordle shows players.
+function renderStatistics(stats: Stats): string {
+  const { played, winPct, currentStreak, maxStreak, distribution, failures } = stats;
   const maxCount = Math.max(...distribution, 1);
 
   const distributionLines = distribution.map((count, index) => {
@@ -52,6 +75,8 @@ function renderStatistics(results: (number | null)[]): string {
     '',
     'GUESS DISTRIBUTION',
     ...distributionLines,
+    '',
+    `Unsolved (${failures.length}): ${failures.join(', ') || 'none'}`,
   ].join('\n');
 }
 
@@ -61,15 +86,18 @@ function renderStatistics(results: (number | null)[]): string {
 describe('Wordleb0t logic', () => {
   it('solves the vast majority of official NYT Wordle answers within 6 guesses', () => {
     const results = answers.map(solve);
-    const failures = answers.filter((_, index) => results[index] === null);
+    const stats = computeStats(answers, results);
 
-    console.log(
-      '\n' + renderStatistics(results) + `\n\nUnsolved (${failures.length}): ${failures.join(', ') || 'none'}`,
+    console.log('\n' + renderStatistics(stats));
+
+    writeFileSync(
+      WIN_RATE_OUTPUT_PATH,
+      JSON.stringify({ ...stats, updatedAt: new Date().toISOString() }, null, 2) + '\n',
     );
 
     // Not expected to hit 100%, since wordleb0t's dictionary isn't tailored to the NYT
     // answer list - this just guards against regressions in the guessing algorithm.
-    const winRate = (answers.length - failures.length) / answers.length;
+    const winRate = stats.wins / stats.played;
     expect(winRate).toBeGreaterThanOrEqual(0.95);
   }, 120000); // GitHub Actions runners are slower than a local machine; this takes ~15s locally.
 });
