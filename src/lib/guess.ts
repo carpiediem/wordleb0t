@@ -85,7 +85,8 @@ function score({ lettersRank, usageRank }: ScoredWord, guessIndex: number) {
   // letting a rarer-but-listed word leapfrog a common-but-unlisted one (see #10). Instead,
   // fall back to an estimated usage rank interpolated from lettersRank, scaled into the same
   // range as targets.length, so an isolated gap in targets.json degrades gracefully.
-  const effectiveUsageRank = usageRank === -1 ? Math.round((lettersRank / dictionary.length) * targets.length) : usageRank;
+  const effectiveUsageRank =
+    usageRank === -1 ? Math.round((lettersRank / dictionary.length) * targets.length) : usageRank;
   return dictionary.length - lettersRank + 0.5 * guessIndex * (targets.length - effectiveUsageRank);
 }
 
