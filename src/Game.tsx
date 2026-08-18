@@ -1,7 +1,7 @@
 import { ChangeEvent, useRef, useState, useEffect } from 'react';
 import { Row, RowState } from './Row';
 import { Clue, CluedLetter, foundReducer } from './clue';
-import { makeGuess } from './guess';
+import { makeGuess, countRemaining } from './guess';
 
 declare const window: { ga: (action: string, options: any) => void };
 
@@ -21,6 +21,7 @@ function Game(props: GameProps) {
   const [currentOptions, setCurrentOptions] = useState<string[]>([]);
   const [guesses, setGuesses] = useState<string[]>([]);
   const [clues, setClues] = useState<CluedLetter[][]>([]);
+  const [optionCounts, setOptionCounts] = useState<number[]>([]);
   const [hint, setHint] = useState<string>("Tap the letters to check Wordlebot's guess");
   const [userWord, setUserWord] = useState('');
 
@@ -39,9 +40,12 @@ function Game(props: GameProps) {
   const handleLockIn = (rowClues: CluedLetter[]) => {
     if (gameState !== GameState.Playing) return;
 
+    const nextClues = [...clues, rowClues];
     const isWon = rowClues.every(({ clue }) => clue === Clue.Correct);
-    const remainingOptions = makeGuess(wordLength, [...clues, rowClues]);
+    const remainingOptions = makeGuess(wordLength, nextClues);
     const isLost = guesses.length === 6 || remainingOptions.length === 0;
+
+    setOptionCounts((value) => [...value, countRemaining(wordLength, nextClues)]);
 
     if (isWon) {
       setGameState(GameState.Won);
@@ -73,12 +77,14 @@ function Game(props: GameProps) {
   const handleUndo = (index: number) => {
     setGuesses(guesses.slice(0, index));
     setClues(clues.slice(0, index));
+    setOptionCounts(optionCounts.slice(0, index));
   };
 
   const handleReset = () => {
     foundLetters = [];
     setGuesses([]);
     setClues([]);
+    setOptionCounts([]);
     setCurrentOptions(makeGuess(wordLength));
     setGameState(GameState.Playing);
   };
@@ -122,6 +128,7 @@ function Game(props: GameProps) {
           foundLetters={foundLetters}
           isPlaying={gameState === GameState.Playing}
           rowState={rowState}
+          optionsRemaining={optionCounts[i]}
           onChange={handleRowChange}
           onLockIn={handleLockIn}
           onUndo={() => handleUndo(i)}

@@ -72,6 +72,33 @@ body {
   background-color: white;
 }
 
+.Row td.Row-count {
+  width: auto;
+  min-width: 72px;
+  margin-left: 8px;
+  text-align: left;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+
+.Row-count-number {
+  display: block;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.Row-count-label {
+  display: block;
+  font-size: 11px;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+body.dark .Row-count-label {
+  color: #aaa;
+}
+
 .App-container {
   position: relative;
   display: flex;

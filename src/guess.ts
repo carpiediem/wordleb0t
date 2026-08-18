@@ -101,3 +101,8 @@ export function makeGuess(wordLength: number, clues: CluedLetter[][] = []): stri
 
   return result.slice(0, 8).map(({ word }) => word);
 }
+
+export function countRemaining(wordLength: number, clues: CluedLetter[][] = []): number {
+  const re = toRegExp(clues);
+  return scoredWords.reduce((count, { word }) => (word.length === wordLength && re.test(word) ? count + 1 : count), 0);
+}

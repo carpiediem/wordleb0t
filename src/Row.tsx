@@ -13,6 +13,7 @@ interface RowProps {
   wordLength: number;
   word: string;
   foundLetters: string[];
+  optionsRemaining?: number;
   onChange: (isLockable: boolean) => void;
   onLockIn: (rowClues: CluedLetter[]) => void;
   onUndo: () => void;
@@ -26,6 +27,7 @@ export function Row({
   word = '',
   foundLetters = [],
   rowState,
+  optionsRemaining,
   onChange,
   onLockIn,
   onUndo,
@@ -100,6 +102,14 @@ export function Row({
           <button onClick={onUndo} className="undo" title="Undo this feedback and make changes">
             ⎌
           </button>
+        )}
+      </td>
+      <td className="Row-count">
+        {isLockedIn && optionsRemaining !== undefined && (
+          <>
+            <span className="Row-count-number">{optionsRemaining.toLocaleString()}</span>
+            <span className="Row-count-label">{optionsRemaining === 1 ? 'word left' : 'words left'}</span>
+          </>
         )}
       </td>
     </tr>
