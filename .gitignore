@@ -9,6 +9,9 @@
 # test coverage
 /coverage
 
+# NYT answers simulation output (see .github/workflows/nyt-answers.yml)
+/nyt-winrate.json
+
 # misc
 .DS_Store
 
