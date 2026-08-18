@@ -40,7 +40,7 @@ interface Stats {
 function computeStats(answers: string[], results: (number | null)[]): Stats {
   const played = results.length;
   const wins = results.filter((result) => result !== null).length;
-  const winPct = Math.round((wins / played) * 100);
+  const winPct = Math.round((wins / played) * 10000) / 100;
   const failures = answers.filter((_, index) => results[index] === null);
 
   let currentStreak = 0;
