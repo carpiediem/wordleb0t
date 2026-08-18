@@ -30,7 +30,7 @@ export function About() {
         ]}
       /> */}
       <p>
-        <b>W</b> and <b>O</b> aren't in the target word at all.
+        <b>W</b> and <b>O</b> aren&apos;t in the target word at all.
       </p>
       <p>
         <b className={'green-bg'}>R</b> is correct! The third letter is <b className={'green-bg'}>R</b>
@@ -44,7 +44,7 @@ export function About() {
       </p>
       <hr />
       <p>
-        Let's move the <b>D</b> in our next guess:
+        Let&apos;s move the <b>D</b> in our next guess:
       </p>
       {/* <Row
         rowState={RowState.LockedIn}
@@ -75,7 +75,7 @@ export function About() {
       <p>
         This game will be free and ad-free forever,
         <br />
-        but you can <a href="https://ko-fi.com/chordbug">buy me a coffee</a> if you'd like.
+        but you can <a href="https://ko-fi.com/chordbug">buy me a coffee</a> if you&apos;d like.
       </p>
     </div>
   );

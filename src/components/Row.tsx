@@ -41,7 +41,7 @@ export function Row({
   const isCallbackTriggered = isPlaying && isEditing;
 
   useEffect(() => {
-    isCallbackTriggered && onChange(isLockable);
+    if (isCallbackTriggered) onChange(isLockable);
   }, [onChange, isCallbackTriggered, isLockable]);
 
   const handleClick = (i: number) => () => {
@@ -60,7 +60,7 @@ export function Row({
 
       const i = parseInt(key, 10) - 1;
 
-      i >= 0 && i <= wordLength - 1 && handleClick(i)();
+      if (i >= 0 && i <= wordLength - 1) handleClick(i)();
     };
 
     window.addEventListener('keydown', handleKeyDown);
@@ -70,7 +70,7 @@ export function Row({
   });
 
   useEffect(() => {
-    isEmpty && setRowClues(Array.from(word).map((_, index) => (foundLetters[index] ? 2 : -1)));
+    if (isEmpty) setRowClues(Array.from(word).map((_, index) => (foundLetters[index] ? 2 : -1)));
   }, [word, foundLetters, isEmpty]);
 
   return (

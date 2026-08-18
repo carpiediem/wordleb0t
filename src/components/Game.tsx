@@ -3,7 +3,7 @@ import { Row, RowState } from './Row';
 import { Clue, CluedLetter, foundReducer } from '../lib/clue';
 import { makeGuess, countRemaining } from '../lib/guess';
 
-declare const window: { ga: (action: string, options: any) => void };
+declare const window: { ga: (action: string, options: Record<string, unknown>) => void };
 
 enum GameState {
   Playing,
@@ -142,7 +142,7 @@ function Game(props: GameProps) {
         <div className="bubble">
           {gameState === GameState.Playing && (
             <>
-              <h2>I think it's</h2>
+              <h2>I think it&apos;s</h2>
               <select onChange={handleSelect}>
                 {currentOptions.map((word) => (
                   <option key={word}>{word.toUpperCase()}</option>
@@ -153,7 +153,7 @@ function Game(props: GameProps) {
 
           {gameState === GameState.Won && <h2>I won!</h2>}
           {gameState === GameState.Lost && (guesses.length === 6 ? <h2>Too bad...</h2> : <h2>I give up!</h2>)}
-          {gameState !== GameState.Playing && <button onClick={handleReset}>Let's play again</button>}
+          {gameState !== GameState.Playing && <button onClick={handleReset}>Let&apos;s play again</button>}
         </div>
         <img src="./bot.png" alt="bot" />
       </div>

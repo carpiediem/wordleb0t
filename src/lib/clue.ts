@@ -12,7 +12,7 @@ export interface CluedLetter {
 }
 
 export function clue(word: string, target: string): CluedLetter[] {
-  let elusive: string[] = [];
+  const elusive: string[] = [];
   target.split('').forEach((letter, i) => {
     if (word[i] !== letter) {
       elusive.push(letter);
