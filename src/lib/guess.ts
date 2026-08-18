@@ -87,7 +87,7 @@ function score({ lettersRank, usageRank }: ScoredWord, guessIndex: number) {
 export function makeGuess(wordLength: number, clues: CluedLetter[][] = []): string[] {
   const re = toRegExp(clues);
 
-  if (clues.length === 0 && localStorage.INITIAL_GUESS?.length === wordLength) {
+  if (clues.length === 0 && typeof localStorage !== 'undefined' && localStorage.INITIAL_GUESS?.length === wordLength) {
     return [localStorage.INITIAL_GUESS];
   }
 
