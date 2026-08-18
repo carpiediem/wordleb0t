@@ -2,7 +2,7 @@
 /build
 /coverage
 package-lock.json
-src/dictionary.json
-src/dictionary-ranked.json
-src/frequencies.json
-src/targets.json
+src/data/dictionary.json
+src/data/dictionary-ranked.json
+src/data/frequencies.json
+src/data/targets.json
