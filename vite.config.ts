@@ -19,5 +19,9 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: './src/setupTests.ts',
+    coverage: {
+      // lcov is what the Codecov upload step in CI reads.
+      reporter: ['text', 'html', 'lcov'],
+    },
   },
 });
