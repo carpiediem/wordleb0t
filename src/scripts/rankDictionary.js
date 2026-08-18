@@ -1,5 +1,5 @@
-const dictionary = require('./dictionary.json');
-const frequencies = require('./frequencies.json');
+const dictionary = require('../data/dictionary.json');
+const frequencies = require('../data/frequencies.json');
 
 const score = (word) => {
   let freqSum = 0;

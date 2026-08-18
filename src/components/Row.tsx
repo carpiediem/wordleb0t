@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Clue, CluedLetter } from './clue';
+import { Clue, CluedLetter } from '../lib/clue';
 
 export enum RowState {
   LockedIn,

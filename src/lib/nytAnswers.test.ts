@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { makeGuess } from './guess';
 import { clue, CluedLetter } from './clue';
-import answers from './nytAnswers.json';
+import answers from '../data/nytAnswers.json';
 
 const WORD_LENGTH = 5;
 const MAX_GUESSES = 6;

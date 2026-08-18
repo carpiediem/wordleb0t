@@ -1,5 +1,5 @@
-import dictionary from './dictionary-ranked.json';
-import targets from './targets.json';
+import dictionary from '../data/dictionary-ranked.json';
+import targets from '../data/targets.json';
 import { Clue, CluedLetter } from './clue';
 
 type ScoredWord = {

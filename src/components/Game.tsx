@@ -1,7 +1,7 @@
 import { ChangeEvent, useRef, useState, useEffect } from 'react';
 import { Row, RowState } from './Row';
-import { Clue, CluedLetter, foundReducer } from './clue';
-import { makeGuess, countRemaining } from './guess';
+import { Clue, CluedLetter, foundReducer } from '../lib/clue';
+import { makeGuess, countRemaining } from '../lib/guess';
 
 declare const window: { ga: (action: string, options: any) => void };
 

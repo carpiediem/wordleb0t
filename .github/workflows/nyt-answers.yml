@@ -5,28 +5,28 @@ on:
     branches:
       - main
     paths:
-      - 'src/guess.ts'
-      - 'src/clue.ts'
-      - 'src/util.ts'
-      - 'src/dictionary-ranked.json'
-      - 'src/targets.json'
-      - 'src/nytAnswers.json'
-      - 'src/nytAnswers.test.ts'
-      - 'vitest.nyt.config.ts'
+      - 'src/lib/guess.ts'
+      - 'src/lib/clue.ts'
+      - 'src/lib/util.ts'
+      - 'src/data/dictionary-ranked.json'
+      - 'src/data/targets.json'
+      - 'src/data/nytAnswers.json'
+      - 'src/lib/nytAnswers.test.ts'
+      - 'vitest.nyt.config.mts'
       - '.github/workflows/nyt-answers.yml'
   pull_request:
     types: [opened, ready_for_review, synchronize, reopened]
     branches:
       - main
     paths:
-      - 'src/guess.ts'
-      - 'src/clue.ts'
-      - 'src/util.ts'
-      - 'src/dictionary-ranked.json'
-      - 'src/targets.json'
-      - 'src/nytAnswers.json'
-      - 'src/nytAnswers.test.ts'
-      - 'vitest.nyt.config.ts'
+      - 'src/lib/guess.ts'
+      - 'src/lib/clue.ts'
+      - 'src/lib/util.ts'
+      - 'src/data/dictionary-ranked.json'
+      - 'src/data/targets.json'
+      - 'src/data/nytAnswers.json'
+      - 'src/lib/nytAnswers.test.ts'
+      - 'vitest.nyt.config.mts'
       - '.github/workflows/nyt-answers.yml'
 
 jobs:

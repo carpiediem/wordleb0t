@@ -10,6 +10,6 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: './src/setupTests.ts',
-    include: ['src/nytAnswers.test.ts'],
+    include: ['src/lib/nytAnswers.test.ts'],
   },
 });

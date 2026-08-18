@@ -21,7 +21,7 @@ export default defineConfig({
     setupFiles: './src/setupTests.ts',
     // Runs separately, via `npm run test:nyt` - it's slow, and only relevant when
     // guess.ts or its dependencies change (see .github/workflows/nyt-answers.yml).
-    exclude: [...configDefaults.exclude, 'src/nytAnswers.test.ts'],
+    exclude: [...configDefaults.exclude, 'src/lib/nytAnswers.test.ts'],
     coverage: {
       // lcov is what the Codecov upload step in CI reads.
       reporter: ['text', 'html', 'lcov'],
