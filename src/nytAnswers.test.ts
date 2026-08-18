@@ -71,5 +71,5 @@ describe('Wordleb0t logic', () => {
     // answer list - this just guards against regressions in the guessing algorithm.
     const winRate = (answers.length - failures.length) / answers.length;
     expect(winRate).toBeGreaterThanOrEqual(0.95);
-  }, 30000);
+  }, 120000); // GitHub Actions runners are slower than a local machine; this takes ~15s locally.
 });
