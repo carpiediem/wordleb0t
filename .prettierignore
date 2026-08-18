@@ -2,6 +2,7 @@
 /build
 /coverage
 package-lock.json
+nyt-answers-baseline.json
 src/data/dictionary.json
 src/data/dictionary-ranked.json
 src/data/frequencies.json
