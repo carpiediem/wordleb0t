@@ -33,6 +33,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:nyt": "vitest run --config vitest.nyt.config.ts --reporter=verbose",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d build",
     "freqs": "node src/getFrequencies.js > src/frequencies.json",

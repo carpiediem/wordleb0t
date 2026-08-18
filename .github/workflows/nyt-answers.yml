@@ -1,0 +1,51 @@
+name: NYT Answers
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/guess.ts'
+      - 'src/clue.ts'
+      - 'src/util.ts'
+      - 'src/dictionary-ranked.json'
+      - 'src/targets.json'
+      - 'src/nytAnswers.json'
+      - 'src/nytAnswers.test.ts'
+      - 'vitest.nyt.config.ts'
+      - '.github/workflows/nyt-answers.yml'
+  pull_request:
+    types: [opened, ready_for_review, synchronize, reopened]
+    branches:
+      - main
+    paths:
+      - 'src/guess.ts'
+      - 'src/clue.ts'
+      - 'src/util.ts'
+      - 'src/dictionary-ranked.json'
+      - 'src/targets.json'
+      - 'src/nytAnswers.json'
+      - 'src/nytAnswers.test.ts'
+      - 'vitest.nyt.config.ts'
+      - '.github/workflows/nyt-answers.yml'
+
+jobs:
+  test-nyt-answers:
+    name: Run guess logic against every NYT Wordle answer
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: npm
+
+      - name: NPM install
+        run: npm ci --legacy-peer-deps
+
+      - name: Run simulation
+        run: npm run test:nyt
