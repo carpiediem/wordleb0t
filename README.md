@@ -16,6 +16,8 @@ If you realize you made a mistake, there's an undo button to go back. Speed thin
 
 The core of this repository was forked from [@chordbug](https://twitter.com/chordbug)'s excellent [hello-wordl](https://github.com/lynn/hello-wordl) project.
 
+Wordleb0t was released in January 2022, several months before the New York Times launched its own [Wordle-solving analysis tool](https://www.nytimes.com/interactive/2022/upshot/wordle-bot.html) in April 2022.
+
 ## For developers
 
 If you can make Wordleb0t smarter, please feel free to [fork the code](https://docs.github.com/en/get-started/quickstart/fork-a-repo) on GitHub or leave a pull request.
