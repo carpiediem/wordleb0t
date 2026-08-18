@@ -81,7 +81,12 @@ export function colorToRegExp(word: string, colorClue: string) {
 }
 
 function score({ lettersRank, usageRank }: ScoredWord, guessIndex: number) {
-  return dictionary.length - lettersRank + (usageRank === -1 ? 0 : 0.5 * guessIndex * (targets.length - usageRank));
+  // Words absent from targets.json (usageRank === -1) would otherwise get zero usage bonus,
+  // letting a rarer-but-listed word leapfrog a common-but-unlisted one (see #10). Instead,
+  // fall back to an estimated usage rank interpolated from lettersRank, scaled into the same
+  // range as targets.length, so an isolated gap in targets.json degrades gracefully.
+  const effectiveUsageRank = usageRank === -1 ? Math.round((lettersRank / dictionary.length) * targets.length) : usageRank;
+  return dictionary.length - lettersRank + 0.5 * guessIndex * (targets.length - effectiveUsageRank);
 }
 
 export function makeGuess(wordLength: number, clues: CluedLetter[][] = []): string[] {
