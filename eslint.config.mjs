@@ -41,7 +41,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['src/scripts/**/*.js'],
+    files: ['src/scripts/**/*.js', '.github/scripts/**/*.cjs'],
     languageOptions: {
       sourceType: 'commonjs',
       globals: { ...globals.node },

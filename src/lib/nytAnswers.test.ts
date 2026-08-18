@@ -30,6 +30,7 @@ interface Stats {
   played: number;
   wins: number;
   winPct: number;
+  avgGuesses: number; // mean guesses per win
   currentStreak: number;
   maxStreak: number;
   distribution: number[]; // count of wins in 1, 2, ..., MAX_GUESSES guesses
@@ -54,12 +55,15 @@ function computeStats(answers: string[], results: (number | null)[]): Stats {
     (_, guessCount) => results.filter((result) => result === guessCount + 1).length,
   );
 
-  return { played, wins, winPct, currentStreak, maxStreak, distribution, failures };
+  const totalGuesses = results.reduce((sum: number, result) => sum + (result ?? 0), 0);
+  const avgGuesses = Math.round((totalGuesses / wins) * 100) / 100;
+
+  return { played, wins, winPct, avgGuesses, currentStreak, maxStreak, distribution, failures };
 }
 
 // Mimics the "STATISTICS" card NYT's Wordle shows players.
 function renderStatistics(stats: Stats): string {
-  const { played, winPct, currentStreak, maxStreak, distribution, failures } = stats;
+  const { played, winPct, avgGuesses, currentStreak, maxStreak, distribution, failures } = stats;
   const maxCount = Math.max(...distribution, 1);
 
   const distributionLines = distribution.map((count, index) => {
@@ -71,7 +75,7 @@ function renderStatistics(stats: Stats): string {
   return [
     'STATISTICS',
     '',
-    `${played} Played   ${winPct} Win %   ${currentStreak} Current Streak   ${maxStreak} Max Streak`,
+    `${played} Played   ${winPct} Win %   ${avgGuesses} Guesses to Win   ${currentStreak} Current Streak   ${maxStreak} Max Streak`,
     '',
     'GUESS DISTRIBUTION',
     ...distributionLines,
