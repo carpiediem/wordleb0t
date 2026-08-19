@@ -7,7 +7,9 @@ When you play [Wordle](https://www.powerlanguage.co.uk/wordle/), the computer
 picks the word and you guess. Wordleb0t flips the script and guesses the word
 that you choose.
 
-Play it [**here**](https://carpiediem.github.io/wordleb0t/).
+Play it [**here**](https://carpiediem.github.io/wordleb0t/), or follow
+[@wordleb0t](https://x.com/wordleb0t) on X for a daily post of its guesses
+against that day's NYT puzzle.
 
 ## Introduction
 
@@ -76,3 +78,13 @@ can jump straight to the column that matches what you saw. Results with 4 or
 5 colored letters are broken out into their own section below the rest, since
 there are far more color arrangements than there are worthwhile columns to
 spread them across.
+
+### Daily X post
+
+The [Post Daily Result](.github/workflows/post-daily-result.yml) GitHub
+Actions workflow runs on a schedule, fetching that day's NYT Wordle answer,
+solving it with Wordleb0t, and posting the result to
+[@wordleb0t](https://x.com/wordleb0t). It reads Twitter/X API credentials
+from repo secrets (`TWITTER_API_KEY`, `TWITTER_API_SECRET`,
+`TWITTER_ACCESS_TOKEN`, `TWITTER_ACCESS_TOKEN_SECRET`) and can also be
+triggered manually from the Actions tab.
