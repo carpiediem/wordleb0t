@@ -8,7 +8,8 @@ import { solve, stepsToEmojiGrid } from '../lib/solve';
 
 const MAX_GUESSES = 6;
 const NYT_WORDLE_ENDPOINT = 'https://www.nytimes.com/svc/wordle/v2';
-const WORDLEB0T_URL = 'https://carpiediem.github.io/wordleb0t';
+// No scheme: X auto-links bare domains, and this reads cleaner in the post.
+const WORDLEB0T_URL = 'carpiediem.github.io/wordleb0t';
 
 export interface NytWordleResponse {
   solution: string;

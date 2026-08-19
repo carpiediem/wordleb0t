@@ -92,7 +92,7 @@ describe('requireEnv', () => {
 
 describe('buildStatus', () => {
   const steps = [{ guess: 'slate', clues: [{ letter: 's', clue: Clue.Correct }] }];
-  const footer = '\n\n#Wordle1234\nhttps://carpiediem.github.io/wordleb0t';
+  const footer = '\n\n#Wordle1234\ncarpiediem.github.io/wordleb0t';
 
   it('shows the guess count when solved', () => {
     expect(buildStatus(1234, '2026-08-19', 3, steps)).toBe(`Wordle 1234 (August 19, 2026) 3/6\n\n🟩${footer}`);
@@ -185,6 +185,6 @@ describe('main', () => {
     const status = tweetMock.mock.calls[0][0] as string;
     expect(status).toMatch(/^Wordle 1234 \([A-Z][a-z]+ \d{1,2}, \d{4}\) \d\/6\n\n/);
     expect(status).toContain('#Wordle1234');
-    expect(status).toContain('https://carpiediem.github.io/wordleb0t');
+    expect(status).toContain('carpiediem.github.io/wordleb0t');
   });
 });
