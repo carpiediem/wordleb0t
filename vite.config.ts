@@ -23,8 +23,9 @@ export default defineConfig({
     // guess.ts or its dependencies change (see .github/workflows/nyt-answers.yml).
     exclude: [...configDefaults.exclude, 'src/lib/nytAnswers.test.ts'],
     coverage: {
-      // lcov is what the Codecov upload step in CI reads.
-      reporter: ['text', 'html', 'lcov'],
+      // lcov is what the Codecov upload step in CI reads; json-summary is what
+      // .github/scripts/coverage-summary.cjs reads to build the CI step summary.
+      reporter: ['text', 'html', 'lcov', 'json-summary'],
     },
   },
 });

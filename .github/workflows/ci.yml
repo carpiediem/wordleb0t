@@ -31,6 +31,9 @@ jobs:
         env:
           CI: true
 
+      - name: Write coverage summary
+        run: node .github/scripts/coverage-summary.cjs
+
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5
         with:
