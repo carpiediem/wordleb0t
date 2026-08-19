@@ -137,8 +137,15 @@ function packColumns(groups: Clue[][][], maxRows: number): Clue[][][] {
 // Lays out every clue pattern into worksheet columns, to match the layout
 // from https://github.com/carpiediem/wordleb0t/issues/19. The all-gray and
 // all-yellow patterns are pulled out to be shown in the header instead, since
-// each is just a single pattern.
-function worksheetLayout(wordLength: number): { headerPatterns: Clue[][]; columns: Clue[][][] } {
+// each is just a single pattern. The columns for guesses with almost every
+// letter colored (all but one, or all of them) are split out into their own
+// section below the rest, since by then there are more color arrangements
+// than there are useful positions to put them in.
+function worksheetLayout(wordLength: number): {
+  headerPatterns: Clue[][];
+  topColumns: Clue[][][];
+  bottomColumns: Clue[][][];
+} {
   const headerPatterns: Clue[][] = [];
   const groupsByColoredCount = new Map<number, Clue[][][]>();
   for (const { coloredCount, greens, patterns } of patternGroups(wordLength)) {
@@ -156,12 +163,18 @@ function worksheetLayout(wordLength: number): { headerPatterns: Clue[][]; column
   // colors can produce for this word length.
   const maxRows = Math.max(...Array.from({ length: wordLength + 1 }, (_, n) => combinations(wordLength, n).length));
 
-  const columns: Clue[][][] = [];
+  const topColumns: Clue[][][] = [];
+  const bottomColumns: Clue[][][] = [];
   for (const coloredCount of [...groupsByColoredCount.keys()].sort((a, b) => a - b)) {
-    columns.push(...packColumns(groupsByColoredCount.get(coloredCount)!, maxRows));
+    const packed = packColumns(groupsByColoredCount.get(coloredCount)!, maxRows);
+    if (coloredCount >= wordLength - 1) {
+      bottomColumns.push(...packed);
+    } else {
+      topColumns.push(...packed);
+    }
   }
 
-  return { headerPatterns, columns };
+  return { headerPatterns, topColumns, bottomColumns };
 }
 
 function suggestionFor(word: string, pattern: Clue[]): string | undefined {
@@ -198,29 +211,47 @@ function renderCard(word: string, pattern: Clue[], suggestion: string | undefine
   );
 }
 
+function renderColumns(
+  word: string,
+  columns: Clue[][][],
+  top: number,
+  cardOuterWidth: number,
+  cardOuterHeight: number,
+): string {
+  return columns
+    .flatMap((column, col) =>
+      column.map((pattern, row) => {
+        const x = MARGIN + col * cardOuterWidth;
+        const y = top + row * cardOuterHeight;
+        const suggestion = suggestionFor(word, pattern);
+        return `<g transform="translate(${x}, ${y})">${renderCard(word, pattern, suggestion)}</g>`;
+      }),
+    )
+    .join('\n');
+}
+
 function generateWorksheet(word: string): string {
   const wordLength = word.length;
-  const { headerPatterns, columns } = worksheetLayout(wordLength);
+  const { headerPatterns, topColumns, bottomColumns } = worksheetLayout(wordLength);
 
   const cardWidth = wordLength * TILE_SIZE + (wordLength - 1) * TILE_GAP;
   const cardHeight = 2 * TILE_SIZE + TILE_GAP;
   const cardOuterWidth = cardWidth + CARD_GAP_X;
   const cardOuterHeight = cardHeight + CARD_GAP_Y;
   const headerHeight = cardHeight + MARGIN;
+  const sectionGap = MARGIN * 2;
 
-  const rows = Math.max(...columns.map((column) => column.length));
-  const bodyWidth = MARGIN * 2 + columns.length * cardOuterWidth - CARD_GAP_X;
+  const topRows = Math.max(...topColumns.map((column) => column.length));
+  const bottomRows = Math.max(...bottomColumns.map((column) => column.length));
+  const bodyWidth = MARGIN * 2 + Math.max(topColumns.length, bottomColumns.length) * cardOuterWidth - CARD_GAP_X;
 
-  const cards = columns
-    .flatMap((column, col) =>
-      column.map((pattern, row) => {
-        const x = MARGIN + col * cardOuterWidth;
-        const y = MARGIN + headerHeight + row * cardOuterHeight;
-        const suggestion = suggestionFor(word, pattern);
-        return `<g transform="translate(${x}, ${y})">${renderCard(word, pattern, suggestion)}</g>`;
-      }),
-    )
-    .join('\n');
+  const topSectionTop = MARGIN + headerHeight;
+  const topSectionHeight = topRows * cardOuterHeight - CARD_GAP_Y;
+  const dividerY = topSectionTop + topSectionHeight + sectionGap / 2;
+  const bottomSectionTop = dividerY + sectionGap / 2;
+
+  const topCards = renderColumns(word, topColumns, topSectionTop, cardOuterWidth, cardOuterHeight);
+  const bottomCards = renderColumns(word, bottomColumns, bottomSectionTop, cardOuterWidth, cardOuterHeight);
 
   // Lay the title text and the all-gray/all-yellow header cards out
   // left-to-right, tracking how far right they reach so the page is wide
@@ -239,14 +270,16 @@ function generateWorksheet(word: string): string {
   cursorX -= CARD_GAP_X;
 
   const width = Math.max(bodyWidth, cursorX + MARGIN);
-  const height = MARGIN * 2 + headerHeight + rows * cardOuterHeight - CARD_GAP_Y;
+  const height = bottomSectionTop + bottomRows * cardOuterHeight - CARD_GAP_Y + MARGIN;
 
   return [
     `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">`,
     `<rect x="0" y="0" width="${width}" height="${height}" fill="white" />`,
     `<text x="${MARGIN}" y="${MARGIN + headerHeight / 2}" dominant-baseline="central" font-family="sans-serif" font-size="${TITLE_FONT_SIZE}">${escapeXml(titleText)}</text>`,
     headerCards,
-    cards,
+    topCards,
+    `<line x1="${MARGIN}" y1="${dividerY}" x2="${width - MARGIN}" y2="${dividerY}" stroke="#ccc" stroke-width="2" />`,
+    bottomCards,
     `</svg>`,
   ].join('\n');
 }
