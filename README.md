@@ -52,3 +52,27 @@ Finally, `npm run deploy` will deploy your code to the `gh-pages` branch of
 your fork, so that everyone can play your version at
 https://yourname.github.io/wordleb0t (or the name of your fork if you
 renamed it).
+
+### Follow-up worksheets
+
+If you always open with the same first guess (say, `adieu` or `slate`), you
+can generate an SVG worksheet covering every possible gray/yellow/green
+result for that guess, paired with Wordleb0t's suggested next guess for each
+one:
+
+```sh
+npm run worksheet -- adieu
+```
+
+This writes `worksheet-adieu.svg` to the current directory (pass a second
+argument to choose a different output path). Convert it to PNG or PDF with
+any SVG tool, e.g. [Inkscape](https://inkscape.org/) or `rsvg-convert`.
+
+The all-gray and all-yellow results are shown as two cards next to the title,
+since each is just a single result rather than a whole column's worth. The
+remaining results are grouped into columns by how many letters came back
+colored (yellow or green) and by which of those are green vs. yellow, so you
+can jump straight to the column that matches what you saw. Results with 4 or
+5 colored letters are broken out into their own section below the rest, since
+there are far more color arrangements than there are worthwhile columns to
+spread them across.
