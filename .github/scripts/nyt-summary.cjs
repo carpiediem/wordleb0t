@@ -6,7 +6,7 @@ const fs = require('fs');
 const current = JSON.parse(fs.readFileSync('nyt-winrate.json', 'utf8'));
 const baseline = JSON.parse(fs.readFileSync('nyt-answers-baseline.json', 'utf8'));
 
-const winPctDelta = current.winPct - baseline.winPct;
+const winPctDelta = Math.round((current.winPct - baseline.winPct) * 100) / 100;
 const winPctSign = winPctDelta > 0 ? '+' : '';
 
 const avgGuessesDelta = Math.round((current.avgGuesses - baseline.avgGuesses) * 100) / 100;
