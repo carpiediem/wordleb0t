@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { clue } from './clue';
 import { colorToRegExp, countRemaining, makeGuess, toRegExp } from './guess';
 
@@ -46,8 +46,18 @@ describe('colorToRegExp', () => {
 });
 
 describe('makeGuess', () => {
+  // Real localStorage support in jsdom/Node varies by Node version (some
+  // defer to Node's own build-flag-gated implementation), so stub it with a
+  // plain object rather than depending on the environment providing one.
+  let localStorageMock: Record<string, string>;
+
+  beforeEach(() => {
+    localStorageMock = {};
+    vi.stubGlobal('localStorage', localStorageMock);
+  });
+
   afterEach(() => {
-    window.localStorage.clear();
+    vi.unstubAllGlobals();
   });
 
   it('returns candidates consistent with the clues so far, best guesses first', () => {
@@ -64,12 +74,12 @@ describe('makeGuess', () => {
   });
 
   it('uses localStorage.INITIAL_GUESS as the opening guess when it matches the word length', () => {
-    window.localStorage.INITIAL_GUESS = 'slate';
+    localStorageMock.INITIAL_GUESS = 'slate';
     expect(makeGuess(5)).toEqual(['slate']);
   });
 
   it('ignores INITIAL_GUESS when its length differs from the requested word length', () => {
-    window.localStorage.INITIAL_GUESS = 'slate';
+    localStorageMock.INITIAL_GUESS = 'slate';
     const guesses = makeGuess(4);
     expect(guesses).not.toEqual(['slate']);
   });
