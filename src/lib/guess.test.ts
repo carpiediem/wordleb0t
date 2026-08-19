@@ -47,7 +47,7 @@ describe('colorToRegExp', () => {
 
 describe('makeGuess', () => {
   afterEach(() => {
-    localStorage.clear();
+    window.localStorage.clear();
   });
 
   it('returns candidates consistent with the clues so far, best guesses first', () => {
@@ -64,12 +64,12 @@ describe('makeGuess', () => {
   });
 
   it('uses localStorage.INITIAL_GUESS as the opening guess when it matches the word length', () => {
-    localStorage.INITIAL_GUESS = 'slate';
+    window.localStorage.INITIAL_GUESS = 'slate';
     expect(makeGuess(5)).toEqual(['slate']);
   });
 
   it('ignores INITIAL_GUESS when its length differs from the requested word length', () => {
-    localStorage.INITIAL_GUESS = 'slate';
+    window.localStorage.INITIAL_GUESS = 'slate';
     const guesses = makeGuess(4);
     expect(guesses).not.toEqual(['slate']);
   });
