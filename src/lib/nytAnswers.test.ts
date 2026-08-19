@@ -1,7 +1,6 @@
 import { writeFileSync } from 'fs';
 import { describe, expect, it } from 'vitest';
-import { makeGuess } from './guess';
-import { clue, CluedLetter } from './clue';
+import { solve as playOut } from './solve';
 import answers from '../data/nytAnswers.json';
 
 // Where CI reads the current run's win rate from, to compare against the
@@ -9,21 +8,12 @@ import answers from '../data/nytAnswers.json';
 // Gitignored - this is a fresh artifact of each run, not committed state.
 const WIN_RATE_OUTPUT_PATH = 'nyt-winrate.json';
 
-const WORD_LENGTH = 5;
 const MAX_GUESSES = 6;
 const BAR_WIDTH = 40;
 
 // null means the word wasn't guessed within MAX_GUESSES.
 function solve(answer: string): number | null {
-  let clues: CluedLetter[][] = [];
-
-  for (let guessCount = 1; guessCount <= MAX_GUESSES; guessCount++) {
-    const guess = makeGuess(WORD_LENGTH, clues)[0];
-    if (!guess) return null; // no candidates left consistent with the clues so far
-    if (guess === answer) return guessCount;
-    clues = [...clues, clue(guess, answer)];
-  }
-  return null;
+  return playOut(answer, MAX_GUESSES).guessCount;
 }
 
 interface Stats {

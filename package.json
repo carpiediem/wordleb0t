@@ -6,6 +6,7 @@
   "dependencies": {
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
+    "twitter-api-v2": "^1.29.1",
     "web-vitals": "^2.1.2"
   },
   "devDependencies": {
@@ -45,6 +46,7 @@
     "freqs": "node src/scripts/getFrequencies.js > src/data/frequencies.json",
     "rank": "node src/scripts/rankDictionary.js > src/data/dictionary-ranked.json",
     "worksheet": "tsx src/scripts/generateWorksheet.ts",
+    "post:daily-result": "tsx src/scripts/postDailyResult.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint src",
