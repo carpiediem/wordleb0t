@@ -1,5 +1,8 @@
 # wordlb0t
 
+[![codecov](https://codecov.io/gh/carpiediem/wordleb0t/branch/main/graph/badge.svg)](https://codecov.io/gh/carpiediem/wordleb0t)
+[![CI Status](https://img.shields.io/github/actions/workflow/status/carpiediem/wordleb0t/ci.yml?branch=main)](https://github.com/carpiediem/wordleb0t/actions?query=workflow%3A%22Node+CI%22)
+
 When you play [Wordle](https://www.powerlanguage.co.uk/wordle/), the computer
 picks the word and you guess. Wordleb0t flips the script and guesses the word
 that you choose.
