@@ -60,14 +60,14 @@ describe('fetchTodaysAnswer', () => {
     const body = { solution: 'slate', days_since_launch: 1234 };
     fetchMock.mockResolvedValue({ ok: true, json: () => Promise.resolve(body) });
 
-    await expect(fetchTodaysAnswer()).resolves.toEqual(body);
-    expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining('https://www.nytimes.com/svc/wordle/v2/'));
+    await expect(fetchTodaysAnswer('2026-08-19')).resolves.toEqual(body);
+    expect(fetchMock).toHaveBeenCalledWith('https://www.nytimes.com/svc/wordle/v2/2026-08-19.json');
   });
 
   it('throws when the response is not ok', async () => {
     fetchMock.mockResolvedValue({ ok: false, status: 404, statusText: 'Not Found' });
 
-    await expect(fetchTodaysAnswer()).rejects.toThrow(/404/);
+    await expect(fetchTodaysAnswer('2026-08-19')).rejects.toThrow(/404/);
   });
 });
 
@@ -92,13 +92,14 @@ describe('requireEnv', () => {
 
 describe('buildStatus', () => {
   const steps = [{ guess: 'slate', clues: [{ letter: 's', clue: Clue.Correct }] }];
+  const footer = '\n\n#Wordle1234\nhttps://carpiediem.github.io/wordleb0t';
 
   it('shows the guess count when solved', () => {
-    expect(buildStatus(1234, 3, steps)).toBe('Wordleb0t 1234 3/6\n\n🟩');
+    expect(buildStatus(1234, '2026-08-19', 3, steps)).toBe(`Wordle 1234 8/19/2026 3/6\n\n🟩${footer}`);
   });
 
   it('shows X when unsolved', () => {
-    expect(buildStatus(1234, null, steps)).toBe('Wordleb0t 1234 X/6\n\n🟩');
+    expect(buildStatus(1234, '2026-08-19', null, steps)).toBe(`Wordle 1234 8/19/2026 X/6\n\n🟩${footer}`);
   });
 });
 
@@ -181,6 +182,9 @@ describe('main', () => {
       accessSecret: 'TWITTER_ACCESS_TOKEN_SECRET-value',
     });
     expect(tweetMock).toHaveBeenCalledTimes(1);
-    expect(tweetMock.mock.calls[0][0]).toMatch(/^Wordleb0t 1234 \d\/6\n\n/);
+    const status = tweetMock.mock.calls[0][0] as string;
+    expect(status).toMatch(/^Wordle 1234 \d{1,2}\/\d{1,2}\/\d{4} \d\/6\n\n/);
+    expect(status).toContain('#Wordle1234');
+    expect(status).toContain('https://carpiediem.github.io/wordleb0t');
   });
 });

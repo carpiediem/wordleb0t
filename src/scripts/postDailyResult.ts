@@ -8,6 +8,7 @@ import { solve, stepsToEmojiGrid } from '../lib/solve';
 
 const MAX_GUESSES = 6;
 const NYT_WORDLE_ENDPOINT = 'https://www.nytimes.com/svc/wordle/v2';
+const WORDLEB0T_URL = 'https://carpiediem.github.io/wordleb0t';
 
 export interface NytWordleResponse {
   solution: string;
@@ -19,8 +20,7 @@ export function todayInNewYork(): string {
   return new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' }); // en-CA gives YYYY-MM-DD
 }
 
-export async function fetchTodaysAnswer(): Promise<NytWordleResponse> {
-  const date = todayInNewYork();
+export async function fetchTodaysAnswer(date: string): Promise<NytWordleResponse> {
   const response = await fetch(`${NYT_WORDLE_ENDPOINT}/${date}.json`);
   if (!response.ok) {
     throw new Error(`Failed to fetch NYT Wordle answer for ${date}: ${response.status} ${response.statusText}`);
@@ -34,19 +34,34 @@ export function requireEnv(name: string): string {
   return value;
 }
 
+// Turns a YYYY-MM-DD date into the M/D/YYYY form used in the post title.
+function formatPuzzleDate(isoDate: string): string {
+  const [year, month, day] = isoDate.split('-').map(Number);
+  return `${month}/${day}/${year}`;
+}
+
 export function buildStatus(
   puzzleNumber: number,
+  puzzleDate: string,
   guessCount: number | null,
   steps: Parameters<typeof stepsToEmojiGrid>[0],
 ): string {
   const resultLabel = guessCount ? `${guessCount}/${MAX_GUESSES}` : `X/${MAX_GUESSES}`;
-  return [`Wordleb0t ${puzzleNumber} ${resultLabel}`, '', stepsToEmojiGrid(steps)].join('\n');
+  return [
+    `Wordle ${puzzleNumber} ${formatPuzzleDate(puzzleDate)} ${resultLabel}`,
+    '',
+    stepsToEmojiGrid(steps),
+    '',
+    `#Wordle${puzzleNumber}`,
+    WORDLEB0T_URL,
+  ].join('\n');
 }
 
 export async function main() {
-  const { solution, days_since_launch: puzzleNumber } = await fetchTodaysAnswer();
+  const date = todayInNewYork();
+  const { solution, days_since_launch: puzzleNumber } = await fetchTodaysAnswer(date);
   const { steps, guessCount } = solve(solution.toLowerCase(), MAX_GUESSES);
-  const status = buildStatus(puzzleNumber, guessCount, steps);
+  const status = buildStatus(puzzleNumber, date, guessCount, steps);
 
   const client = new TwitterApi({
     appKey: requireEnv('TWITTER_API_KEY'),
