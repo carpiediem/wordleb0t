@@ -34,25 +34,17 @@ export function requireEnv(name: string): string {
   return value;
 }
 
-const MONTH_NAMES = [
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December',
-];
-
 // Turns a YYYY-MM-DD date into the "June 20, 2021" form used in the post title.
+// Built from UTC fields and formatted in UTC so the calendar date doesn't
+// shift depending on the runner's local timezone.
 function formatPuzzleDate(isoDate: string): string {
   const [year, month, day] = isoDate.split('-').map(Number);
-  return `${MONTH_NAMES[month - 1]} ${day}, ${year}`;
+  return new Date(Date.UTC(year, month - 1, day)).toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+    timeZone: 'UTC',
+  });
 }
 
 export function buildStatus(
@@ -63,7 +55,7 @@ export function buildStatus(
 ): string {
   const resultLabel = guessCount ? `${guessCount}/${MAX_GUESSES}` : `X/${MAX_GUESSES}`;
   return [
-    `Wordle ${puzzleNumber} ${formatPuzzleDate(puzzleDate)} ${resultLabel}`,
+    `Wordle ${puzzleNumber} (${formatPuzzleDate(puzzleDate)}) ${resultLabel}`,
     '',
     stepsToEmojiGrid(steps),
     '',
