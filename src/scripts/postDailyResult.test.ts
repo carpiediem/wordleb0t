@@ -1,8 +1,22 @@
+import { mkdtempSync, readFileSync, rmSync } from 'fs';
+import { tmpdir } from 'os';
+import { join } from 'path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Clue } from '../lib/clue';
 
 const tweetMock = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
 const twitterApiConstructorMock = vi.hoisted(() => vi.fn());
+
+const MockApiResponseError = vi.hoisted(
+  () =>
+    class MockApiResponseError extends Error {
+      data: Record<string, unknown>;
+      constructor(data: Record<string, unknown>) {
+        super('Request failed');
+        this.data = data;
+      }
+    },
+);
 
 vi.mock('twitter-api-v2', () => ({
   TwitterApi: class {
@@ -11,9 +25,18 @@ vi.mock('twitter-api-v2', () => ({
       twitterApiConstructorMock(...args);
     }
   },
+  ApiResponseError: MockApiResponseError,
 }));
 
-import { buildStatus, fetchTodaysAnswer, main, requireEnv, todayInNewYork } from './postDailyResult';
+import {
+  buildStatus,
+  describeError,
+  fetchTodaysAnswer,
+  main,
+  requireEnv,
+  todayInNewYork,
+  writeFailureSummary,
+} from './postDailyResult';
 
 describe('todayInNewYork', () => {
   it('returns an ISO-formatted date', () => {
@@ -76,6 +99,52 @@ describe('buildStatus', () => {
 
   it('shows X when unsolved', () => {
     expect(buildStatus(1234, null, steps)).toBe('Wordleb0t 1234 X/6\n\n🟩');
+  });
+});
+
+describe('describeError', () => {
+  it("returns the API's problem title when present", () => {
+    const error = new MockApiResponseError({ title: 'Payment Required', detail: 'credits depleted' });
+    expect(describeError(error)).toBe('Payment Required');
+  });
+
+  it('falls back to the message for a plain Error', () => {
+    expect(describeError(new Error('boom'))).toBe('boom');
+  });
+
+  it('falls back to String() for a non-Error value', () => {
+    expect(describeError('boom')).toBe('boom');
+  });
+});
+
+describe('writeFailureSummary', () => {
+  const ORIGINAL_SUMMARY_PATH = process.env.GITHUB_STEP_SUMMARY;
+  let tempDir: string;
+  let summaryPath: string;
+
+  beforeEach(() => {
+    tempDir = mkdtempSync(join(tmpdir(), 'wordleb0t-'));
+    summaryPath = join(tempDir, 'summary.md');
+  });
+
+  afterEach(() => {
+    rmSync(tempDir, { recursive: true, force: true });
+    if (ORIGINAL_SUMMARY_PATH === undefined) delete process.env.GITHUB_STEP_SUMMARY;
+    else process.env.GITHUB_STEP_SUMMARY = ORIGINAL_SUMMARY_PATH;
+  });
+
+  it('appends the error description to the step summary file', () => {
+    process.env.GITHUB_STEP_SUMMARY = summaryPath;
+
+    writeFailureSummary(new MockApiResponseError({ title: 'Payment Required' }));
+
+    expect(readFileSync(summaryPath, 'utf8')).toContain('Payment Required');
+  });
+
+  it('does nothing outside of GitHub Actions', () => {
+    delete process.env.GITHUB_STEP_SUMMARY;
+
+    expect(() => writeFailureSummary(new Error('boom'))).not.toThrow();
   });
 });
 

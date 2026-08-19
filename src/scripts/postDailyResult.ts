@@ -2,7 +2,8 @@
 // Run daily by .github/workflows/post-daily-result.yml.
 //
 // Usage: npm run post:daily-result
-import { TwitterApi } from 'twitter-api-v2';
+import { appendFileSync } from 'fs';
+import { ApiResponseError, TwitterApi } from 'twitter-api-v2';
 import { solve, stepsToEmojiGrid } from '../lib/solve';
 
 const MAX_GUESSES = 6;
@@ -58,11 +59,28 @@ export async function main() {
   console.log(status);
 }
 
+// X's API returns RFC 7807 problem+json bodies on failure, with a short
+// human-readable `title` (e.g. "Payment Required") - surface that instead of
+// a generic "Request failed with code 402".
+export function describeError(error: unknown): string {
+  if (error instanceof ApiResponseError && typeof error.data.title === 'string') {
+    return error.data.title;
+  }
+  return error instanceof Error ? error.message : String(error);
+}
+
+export function writeFailureSummary(error: unknown): void {
+  const summaryPath = process.env.GITHUB_STEP_SUMMARY;
+  if (!summaryPath) return;
+  appendFileSync(summaryPath, `### Failed to post daily result\n\n${describeError(error)}\n`);
+}
+
 // Only run when executed directly (`npm run post:daily-result`), not when imported by tests.
 /* v8 ignore start */
 if (import.meta.url === `file://${process.argv[1]}`) {
   main().catch((error) => {
     console.error(error);
+    writeFailureSummary(error);
     process.exit(1);
   });
 }
