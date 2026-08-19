@@ -34,10 +34,25 @@ export function requireEnv(name: string): string {
   return value;
 }
 
-// Turns a YYYY-MM-DD date into the M/D/YYYY form used in the post title.
+const MONTH_NAMES = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+];
+
+// Turns a YYYY-MM-DD date into the "June 20, 2021" form used in the post title.
 function formatPuzzleDate(isoDate: string): string {
   const [year, month, day] = isoDate.split('-').map(Number);
-  return `${month}/${day}/${year}`;
+  return `${MONTH_NAMES[month - 1]} ${day}, ${year}`;
 }
 
 export function buildStatus(
