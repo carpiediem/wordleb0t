@@ -12,6 +12,9 @@
 # NYT answers simulation output (see .github/workflows/nyt-answers.yml)
 /nyt-winrate.json
 
+# generated follow-up worksheets (see `npm run worksheet`)
+/worksheet-*.svg
+
 # misc
 .DS_Store
 

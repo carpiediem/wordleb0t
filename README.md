@@ -52,3 +52,18 @@ Finally, `npm run deploy` will deploy your code to the `gh-pages` branch of
 your fork, so that everyone can play your version at
 https://yourname.github.io/wordleb0t (or the name of your fork if you
 renamed it).
+
+### Follow-up worksheets
+
+If you always open with the same first guess (say, `adieu` or `slate`), you
+can generate an SVG worksheet covering every possible gray/yellow/green
+result for that guess, paired with Wordleb0t's suggested next guess for each
+one:
+
+```sh
+npm run worksheet -- adieu
+```
+
+This writes `worksheet-adieu.svg` to the current directory (pass a second
+argument to choose a different output path). Convert it to PNG or PDF with
+any SVG tool, e.g. [Inkscape](https://inkscape.org/) or `rsvg-convert`.
