@@ -2,6 +2,7 @@
   "played": 2315,
   "wins": 2253,
   "winPct": 97,
+  "avgGuesses": 3.83,
   "currentStreak": 30,
   "maxStreak": 229,
   "distribution": [
@@ -76,6 +77,6 @@
     "woken",
     "woozy"
   ],
-  "updatedAt": "2026-08-18T21:58:23.044Z",
-  "sha": "0650756f4593fe20f9c0d00a20d799a8abf6fc2b"
+  "updatedAt": "2026-08-18T23:56:52.848Z",
+  "sha": "f2a15ad9875374f95a2e9f9f529f00300b456f39"
 }
