@@ -11,9 +11,8 @@ const TILE_SIZE = 30;
 const TILE_GAP = 3;
 const CARD_GAP_X = 12;
 const CARD_GAP_Y = 14;
-const HEADER_HEIGHT = 60;
 const MARGIN = 20;
-const COLUMNS = 20;
+const TITLE_FONT_SIZE = 28;
 
 interface TileStyle {
   background: string;
@@ -42,22 +41,127 @@ function parseArgs(): { word: string; outputPath: string } {
   return { word, outputPath: outputPath ?? `worksheet-${word}.svg` };
 }
 
-// Every clue pattern of the guess's length, in base-3 counting order,
-// excluding the all-Correct pattern (that guess would already be a win).
-function everyPattern(wordLength: number): Clue[][] {
-  const patterns: Clue[][] = [];
-  const total = 3 ** wordLength;
-  for (let n = 0; n < total; n++) {
-    const pattern: Clue[] = [];
-    let rest = n;
-    for (let i = 0; i < wordLength; i++) {
-      pattern.push(rest % 3);
-      rest = Math.floor(rest / 3);
+// Every way to choose `k` items out of `n`, as index combinations in
+// lexicographic order.
+function combinations(n: number, k: number): number[][] {
+  const result: number[][] = [];
+  const combo: number[] = [];
+  function backtrack(start: number) {
+    if (combo.length === k) {
+      result.push([...combo]);
+      return;
     }
-    if (pattern.every((clue) => clue === Clue.Correct)) continue;
-    patterns.push(pattern);
+    for (let i = start; i < n; i++) {
+      combo.push(i);
+      backtrack(i + 1);
+      combo.pop();
+    }
+  }
+  backtrack(0);
+  return result;
+}
+
+// Every way to color `n` letters green/yellow, ordered by how many are green
+// (fewest first), then lexicographically by which ones are green.
+function colorPatterns(n: number): boolean[][] {
+  const patterns: boolean[][] = [];
+  for (let greenCount = 0; greenCount <= n; greenCount++) {
+    for (const combo of combinations(n, greenCount)) {
+      const pattern = new Array<boolean>(n).fill(false);
+      combo.forEach((i) => (pattern[i] = true));
+      patterns.push(pattern);
+    }
   }
   return patterns;
+}
+
+function cluesFor(wordLength: number, positions: number[], colors: boolean[]): Clue[] {
+  const clue = new Array<Clue>(wordLength).fill(Clue.Absent);
+  positions.forEach((position, i) => {
+    clue[position] = colors[i] ? Clue.Correct : Clue.Elsewhere;
+  });
+  return clue;
+}
+
+interface PatternGroup {
+  // How many of the guess's letters are colored (green or yellow) in this
+  // group's patterns.
+  coloredCount: number;
+  // Which of those colored letters are green, rather than yellow.
+  greens: boolean[];
+  patterns: Clue[][];
+}
+
+// Every possible clue pattern, grouped by how many letters are colored and
+// which of those are green vs. yellow, ordered by coloredCount ascending,
+// then by green count ascending, then lexicographically by which letters are
+// green. Excludes the all-Correct pattern (that guess would already be a
+// win) and, when every letter is colored, the pattern with exactly one
+// yellow letter (with a guess of distinct letters, that state can't happen:
+// the one remaining position could only make that letter correct, not
+// elsewhere).
+function patternGroups(wordLength: number): PatternGroup[] {
+  const groups: PatternGroup[] = [];
+  for (let coloredCount = 0; coloredCount <= wordLength; coloredCount++) {
+    const positionCombos = combinations(wordLength, coloredCount);
+    for (const greens of colorPatterns(coloredCount)) {
+      const greenCount = greens.filter(Boolean).length;
+      if (coloredCount === wordLength && greenCount === wordLength - 1) continue;
+      const patterns = positionCombos
+        .map((positions) => cluesFor(wordLength, positions, greens))
+        .filter((pattern) => !pattern.every((clue) => clue === Clue.Correct));
+      if (patterns.length > 0) groups.push({ coloredCount, greens, patterns });
+    }
+  }
+  return groups;
+}
+
+// Packs a sequence of same-sized-ish groups into columns of at most
+// `maxRows` each, without splitting a group across two columns, so that
+// small groups (like a single colored letter, which can only be green or
+// yellow) share a column instead of leaving it mostly empty.
+function packColumns(groups: Clue[][][], maxRows: number): Clue[][][] {
+  const columns: Clue[][][] = [];
+  let current: Clue[][] = [];
+  for (const group of groups) {
+    if (current.length > 0 && current.length + group.length > maxRows) {
+      columns.push(current);
+      current = [];
+    }
+    current.push(...group);
+  }
+  if (current.length > 0) columns.push(current);
+  return columns;
+}
+
+// Lays out every clue pattern into worksheet columns, to match the layout
+// from https://github.com/carpiediem/wordleb0t/issues/19. The all-gray and
+// all-yellow patterns are pulled out to be shown in the header instead, since
+// each is just a single pattern.
+function worksheetLayout(wordLength: number): { headerPatterns: Clue[][]; columns: Clue[][][] } {
+  const headerPatterns: Clue[][] = [];
+  const groupsByColoredCount = new Map<number, Clue[][][]>();
+  for (const { coloredCount, greens, patterns } of patternGroups(wordLength)) {
+    const isAllGray = coloredCount === 0;
+    const isAllYellow = coloredCount === wordLength && greens.every((green) => !green);
+    if (isAllGray || isAllYellow) {
+      headerPatterns.push(...patterns);
+      continue;
+    }
+    if (!groupsByColoredCount.has(coloredCount)) groupsByColoredCount.set(coloredCount, []);
+    groupsByColoredCount.get(coloredCount)!.push(patterns);
+  }
+
+  // The natural column height: the most rows any single arrangement of
+  // colors can produce for this word length.
+  const maxRows = Math.max(...Array.from({ length: wordLength + 1 }, (_, n) => combinations(wordLength, n).length));
+
+  const columns: Clue[][][] = [];
+  for (const coloredCount of [...groupsByColoredCount.keys()].sort((a, b) => a - b)) {
+    columns.push(...packColumns(groupsByColoredCount.get(coloredCount)!, maxRows));
+  }
+
+  return { headerPatterns, columns };
 }
 
 function suggestionFor(word: string, pattern: Clue[]): string | undefined {
@@ -96,37 +200,52 @@ function renderCard(word: string, pattern: Clue[], suggestion: string | undefine
 
 function generateWorksheet(word: string): string {
   const wordLength = word.length;
-  const patterns = everyPattern(wordLength);
+  const { headerPatterns, columns } = worksheetLayout(wordLength);
 
   const cardWidth = wordLength * TILE_SIZE + (wordLength - 1) * TILE_GAP;
   const cardHeight = 2 * TILE_SIZE + TILE_GAP;
   const cardOuterWidth = cardWidth + CARD_GAP_X;
   const cardOuterHeight = cardHeight + CARD_GAP_Y;
+  const headerHeight = cardHeight + MARGIN;
 
-  const columns = Math.min(COLUMNS, patterns.length);
-  const rows = Math.ceil(patterns.length / columns);
+  const rows = Math.max(...columns.map((column) => column.length));
+  const bodyWidth = MARGIN * 2 + columns.length * cardOuterWidth - CARD_GAP_X;
 
-  const width = MARGIN * 2 + columns * cardOuterWidth - CARD_GAP_X;
-  const height = MARGIN * 2 + HEADER_HEIGHT + rows * cardOuterHeight - CARD_GAP_Y;
-
-  const cards = patterns
-    .map((pattern, index) => {
-      const col = index % columns;
-      const row = Math.floor(index / columns);
-      const x = MARGIN + col * cardOuterWidth;
-      const y = MARGIN + HEADER_HEIGHT + row * cardOuterHeight;
-      const suggestion = suggestionFor(word, pattern);
-      return `<g transform="translate(${x}, ${y})">${renderCard(word, pattern, suggestion)}</g>`;
-    })
+  const cards = columns
+    .flatMap((column, col) =>
+      column.map((pattern, row) => {
+        const x = MARGIN + col * cardOuterWidth;
+        const y = MARGIN + headerHeight + row * cardOuterHeight;
+        const suggestion = suggestionFor(word, pattern);
+        return `<g transform="translate(${x}, ${y})">${renderCard(word, pattern, suggestion)}</g>`;
+      }),
+    )
     .join('\n');
 
-  const titleRow = renderTileRow(word.split(''), () => TILE_COLORS[Clue.Correct]);
+  // Lay the title text and the all-gray/all-yellow header cards out
+  // left-to-right, tracking how far right they reach so the page is wide
+  // enough to fit them.
+  const titleText = `Wordle First Guess Follow-ups: ${word.toUpperCase()}`;
+  let cursorX = MARGIN + titleText.length * TITLE_FONT_SIZE * 0.6 + CARD_GAP_X;
+
+  const headerCards = headerPatterns
+    .map((pattern) => {
+      const suggestion = suggestionFor(word, pattern);
+      const x = cursorX;
+      cursorX += cardOuterWidth;
+      return `<g transform="translate(${x}, ${MARGIN + (headerHeight - cardHeight) / 2})">${renderCard(word, pattern, suggestion)}</g>`;
+    })
+    .join('\n');
+  cursorX -= CARD_GAP_X;
+
+  const width = Math.max(bodyWidth, cursorX + MARGIN);
+  const height = MARGIN * 2 + headerHeight + rows * cardOuterHeight - CARD_GAP_Y;
 
   return [
     `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">`,
     `<rect x="0" y="0" width="${width}" height="${height}" fill="white" />`,
-    `<text x="${MARGIN}" y="${MARGIN + HEADER_HEIGHT / 2}" dominant-baseline="central" font-family="sans-serif" font-size="28">Following-Up On ${escapeXml(word.toUpperCase())}</text>`,
-    `<g transform="translate(${width - MARGIN - cardWidth}, ${MARGIN})">${titleRow}</g>`,
+    `<text x="${MARGIN}" y="${MARGIN + headerHeight / 2}" dominant-baseline="central" font-family="sans-serif" font-size="${TITLE_FONT_SIZE}">${escapeXml(titleText)}</text>`,
+    headerCards,
     cards,
     `</svg>`,
   ].join('\n');
