@@ -1,6 +1,6 @@
 import dictionary from '../data/dictionary-ranked.json';
 import targets from '../data/targets.json';
-import { Clue, CluedLetter } from './clue';
+import { clue as clueFor, Clue, CluedLetter } from './clue';
 
 type ScoredWord = {
   word: string;
@@ -13,6 +13,8 @@ const scoredWords = dictionary.map((word, lettersRank) => ({
   lettersRank,
   usageRank: targets.indexOf(word),
 }));
+
+const scoredWordsByWord = new Map(scoredWords.map((scoredWord) => [scoredWord.word, scoredWord]));
 
 export function toRegExp(clues: CluedLetter[][]) {
   if (clues.length === 0) return /(?:)/;
@@ -84,6 +86,88 @@ function score({ lettersRank, usageRank }: ScoredWord, guessIndex: number) {
   return dictionary.length - lettersRank + (usageRank === -1 ? 0 : 0.5 * guessIndex * (targets.length - usageRank));
 }
 
+// Below this many remaining candidates, a "scout" guess (see below) can't
+// realistically split the field any better than just guessing a candidate
+// outright, and forfeits candidates' own chance of being the answer for no
+// benefit. Above it, candidates sharing most of their letters (e.g. wafer/
+// wager/hater/later) become common enough that testing unconfirmed letters
+// via a non-candidate word pays for itself. See #31.
+const SCOUT_MIN_REMAINING = 8;
+
+// Cap on how many dictionary words (ordered by letter commonality, i.e. the
+// order dictionary-ranked.json is already in) are considered as scouts, to
+// bound the cost of scoring every candidate against every remaining answer.
+const SCOUT_POOL_SIZE = 3000;
+
+function clueSignature(guessWord: string, target: string): number {
+  let signature = 0;
+  for (const { clue } of clueFor(guessWord, target)) signature = signature * 3 + clue!;
+  return signature;
+}
+
+// Shannon entropy, in bits, of the partition `guessWord` induces over
+// `remaining` when each remaining candidate is equally likely to be the
+// answer. Higher entropy means the guess is expected to eliminate more
+// candidates regardless of which clue comes back.
+function entropy(guessWord: string, remaining: string[]): number {
+  const buckets = new Map<number, number>();
+  for (const candidate of remaining) {
+    const signature = clueSignature(guessWord, candidate);
+    buckets.set(signature, (buckets.get(signature) ?? 0) + 1);
+  }
+
+  let bits = 0;
+  for (const count of buckets.values()) {
+    const p = count / remaining.length;
+    bits -= p * Math.log2(p);
+  }
+  return bits;
+}
+
+type ScoutCandidate = {
+  word: string;
+  bits: number;
+  isCandidate: boolean;
+  scoredWord?: ScoredWord;
+};
+
+// Ranks by information gain (entropy) first. Ties - including an exact tie
+// between a real candidate and a scouting word - favor the candidate, since
+// guessing it also has a chance of winning outright; further ties fall back
+// to the usual commonality/usage score.
+export function compareScouts(a: ScoutCandidate, b: ScoutCandidate, guessIndex: number): number {
+  if (Math.abs(a.bits - b.bits) > 1e-9) return b.bits - a.bits;
+  if (a.isCandidate !== b.isCandidate) return a.isCandidate ? -1 : 1;
+  const scoreA = a.scoredWord ? score(a.scoredWord, guessIndex) : -Infinity;
+  const scoreB = b.scoredWord ? score(b.scoredWord, guessIndex) : -Infinity;
+  return scoreB - scoreA;
+}
+
+// Picks a guess to maximize information gain about which remaining candidate
+// is the answer, considering scouting words that aren't themselves candidates
+// (i.e. that don't satisfy every clue so far) when the field is wide enough
+// for that to be worthwhile.
+function scoutGuess(wordLength: number, remaining: ScoredWord[], guessIndex: number): string[] {
+  const remainingWords = remaining.map(({ word }) => word);
+  const remainingSet = new Set(remainingWords);
+
+  const commonScouts = scoredWords.filter(({ word }) => word.length === wordLength).slice(0, SCOUT_POOL_SIZE);
+  const pool = new Set([...remainingWords, ...commonScouts.map(({ word }) => word)]);
+
+  const ranked = Array.from(pool)
+    .map(
+      (word): ScoutCandidate => ({
+        word,
+        bits: entropy(word, remainingWords),
+        isCandidate: remainingSet.has(word),
+        scoredWord: scoredWordsByWord.get(word),
+      }),
+    )
+    .sort((a, b) => compareScouts(a, b, guessIndex));
+
+  return ranked.slice(0, 8).map(({ word }) => word);
+}
+
 export function makeGuess(wordLength: number, clues: CluedLetter[][] = []): string[] {
   const re = toRegExp(clues);
 
@@ -91,8 +175,13 @@ export function makeGuess(wordLength: number, clues: CluedLetter[][] = []): stri
     return [localStorage.INITIAL_GUESS];
   }
 
-  const result = scoredWords
-    .filter(({ word }) => word.length === wordLength && re.test(word))
+  const remaining = scoredWords.filter(({ word }) => word.length === wordLength && re.test(word));
+
+  if (clues.length > 0 && remaining.length > SCOUT_MIN_REMAINING) {
+    return scoutGuess(wordLength, remaining, clues.length);
+  }
+
+  const result = remaining
     .map((scoredWord) => ({
       ...scoredWord,
       score: score(scoredWord, clues.length),
