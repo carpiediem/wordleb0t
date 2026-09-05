@@ -55,7 +55,7 @@ one look-alike per turn, since no candidate word can distinguish more than
 one of the unconfirmed letters at a time. Wordleb0t instead picks a guess -
 which may not even be a possible answer itself - that best _splits up_ the
 remaining field, using [Shannon
-entropy](https://en.wikipedia.org/wiki/Entropy_(information_theory)) to
+entropy](<https://en.wikipedia.org/wiki/Entropy_(information_theory)>) to
 measure how much a guess narrows things down: for each candidate guess,
 Wordleb0t simulates the clue it would get back against every remaining word,
 groups the results by that clue pattern, and scores the guess by how evenly
