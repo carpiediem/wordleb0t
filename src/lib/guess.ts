@@ -166,18 +166,31 @@ export function compareScouts(a: ScoutCandidate, b: ScoutCandidate, guessIndex: 
   return scoreB - scoreA;
 }
 
+// Scoring every scout against every remaining candidate is the expensive
+// part of this (see below), and the same remaining set recurs constantly
+// when backtesting many answers against the same opening guesses - e.g.
+// every answer whose first guess comes back all-gray reaches guess 2 with
+// an identical remaining set. Caching the ranked result per (guessIndex,
+// remaining set) avoids redoing that work for a set already seen.
+const scoutCache = new Map<string, { word: string }[]>();
+
 // Picks a guess to maximize information gain about which remaining candidate
 // is the answer, considering scouting words that aren't themselves candidates
 // (i.e. that don't satisfy every clue so far) when the field is wide enough
 // for that to be worthwhile.
 function scoutGuess(wordLength: number, remaining: ScoredWord[], guessIndex: number): { word: string }[] {
   const remainingWords = remaining.map(({ word }) => word);
+
+  const cacheKey = `${guessIndex}:${remainingWords.join(',')}`;
+  const cached = scoutCache.get(cacheKey);
+  if (cached) return cached;
+
   const remainingSet = new Set(remainingWords);
 
   const commonScouts = scoredWords.filter(({ word }) => word.length === wordLength).slice(0, SCOUT_POOL_SIZE);
   const pool = new Set([...remainingWords, ...commonScouts.map(({ word }) => word)]);
 
-  return Array.from(pool)
+  const ranked = Array.from(pool)
     .map((word): ScoutCandidate => ({
       word,
       bits: entropy(word, remainingWords),
@@ -185,6 +198,9 @@ function scoutGuess(wordLength: number, remaining: ScoredWord[], guessIndex: num
       scoredWord: scoredWordsByWord.get(word),
     }))
     .sort((a, b) => compareScouts(a, b, guessIndex));
+
+  scoutCache.set(cacheKey, ranked);
+  return ranked;
 }
 
 export function makeGuess(wordLength: number, clues: CluedLetter[][] = []): string[] {
