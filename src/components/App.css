@@ -33,6 +33,8 @@ body {
   text-transform: uppercase;
   font-weight: bold;
   cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .Row button,
