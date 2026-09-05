@@ -43,7 +43,7 @@ At every turn, Wordleb0t narrows the field to the words consistent with every
 clue you've given so far - the right letters in the right (or wrong) spots,
 and the letters ruled out entirely.
 
-When that field is small (8 or fewer words), Wordleb0t just guesses the most
+When that field is small (3 or fewer words), Wordleb0t just guesses the most
 promising word left in it, ranked by how common its letters are and, for
 words that have actually been NYT Wordle answers before, how likely NYT is to
 reuse it.
@@ -65,6 +65,15 @@ entropy) than one that mostly produces the same clue no matter which
 remaining word turns out to be the answer, so it's expected to eliminate more
 of the field in one go regardless of what comes back. Ties go to an actual
 candidate word, since guessing one also has a chance of winning outright.
+
+The best guess for a cluster of look-alikes is often a globally uncommon
+word - splitting up `bound`/`found`/`hound`/`mound`/`pound`/`wound` calls for
+a word like `lymph`, not a more familiar one - so every dictionary word of
+the right length is a scouting candidate, not just common ones. Scoring
+every candidate against every remaining word is the expensive part, though,
+so how many candidates get considered shrinks as the remaining field grows:
+a handful of remaining words can afford to search the whole dictionary,
+while hundreds need a smaller search to stay responsive.
 
 This is the same information-theoretic idea behind [3Blue1Brown's "Solving
 Wordle using information
