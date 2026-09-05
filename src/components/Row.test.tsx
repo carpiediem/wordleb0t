@@ -40,6 +40,18 @@ describe('Row', () => {
     expect(screen.getByText('t')).toHaveClass('letter-correct');
   });
 
+  it("doesn't start a letter as correct just because that position has a known letter, if this guess's letter there differs", () => {
+    // A scout guess (see #31/#32) isn't guaranteed to repeat known-correct
+    // letters in their known positions - e.g. "cat" is known correct at
+    // position 0, but a scout guessing "dog" there shouldn't have its 'd'
+    // pre-filled green just because *some* letter is known for position 0.
+    renderRow({ word: 'dog', foundLetters: ['c', undefined as unknown as string, 't'] });
+
+    expect(screen.getByText('d')).toHaveClass('letter-unspecified');
+    expect(screen.getByText('o')).toHaveClass('letter-unspecified');
+    expect(screen.getByText('g')).toHaveClass('letter-unspecified');
+  });
+
   it('cycles a letter through absent, elsewhere, correct, and back to unspecified on click', () => {
     renderRow({ word: 'cat' });
     const cell = screen.getByText('c');
