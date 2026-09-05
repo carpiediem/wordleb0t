@@ -86,6 +86,15 @@ function score({ lettersRank, usageRank }: ScoredWord, guessIndex: number) {
   return dictionary.length - lettersRank + (usageRank === -1 ? 0 : 0.5 * guessIndex * (targets.length - usageRank));
 }
 
+// Ranks by the usual commonality/usage score, highest first.
+export function compareRanks(a: ScoredWord, b: ScoredWord, guessIndex: number): number {
+  return score(b, guessIndex) - score(a, guessIndex);
+}
+
+function rankGuess(remaining: ScoredWord[], guessIndex: number): { word: string }[] {
+  return [...remaining].sort((a, b) => compareRanks(a, b, guessIndex));
+}
+
 // Below this many remaining candidates, a "scout" guess (see below) can't
 // realistically split the field any better than just guessing a candidate
 // outright, and forfeits candidates' own chance of being the answer for no
@@ -99,6 +108,13 @@ const SCOUT_MIN_REMAINING = 8;
 // bound the cost of scoring every candidate against every remaining answer.
 const SCOUT_POOL_SIZE = 3000;
 
+// Packs the gray/yellow/green clue that `guessWord` would get against
+// `target` into a single number, so identical clues (e.g. two different
+// targets that would both turn "wafer" gray-yellow-gray-green-gray) collapse
+// to the same signature and can be grouped with a plain Map. Each letter's
+// clue is one of 3 values (Clue.Absent/Elsewhere/Correct), so reading the
+// per-letter clues as base-3 "digits" gives every distinct clue pattern its
+// own signature with no collisions.
 function clueSignature(guessWord: string, target: string): number {
   let signature = 0;
   for (const { clue } of clueFor(guessWord, target)) signature = signature * 3 + clue!;
@@ -110,6 +126,13 @@ function clueSignature(guessWord: string, target: string): number {
 // answer. Higher entropy means the guess is expected to eliminate more
 // candidates regardless of which clue comes back.
 function entropy(guessWord: string, remaining: string[]): number {
+  // Group `remaining` by the clue signature guessing `guessWord` would
+  // produce against each of them - e.g. every candidate that would turn
+  // "wafer" all-gray lands in one bucket, every one that would turn it
+  // green-gray-gray-gray-yellow lands in another, and so on. A guess that
+  // spreads candidates evenly across many small buckets is more informative
+  // (higher entropy below) than one that dumps most of them into a single
+  // bucket, since the clue that comes back will narrow the field by more.
   const buckets = new Map<number, number>();
   for (const candidate of remaining) {
     const signature = clueSignature(guessWord, candidate);
@@ -147,25 +170,21 @@ export function compareScouts(a: ScoutCandidate, b: ScoutCandidate, guessIndex: 
 // is the answer, considering scouting words that aren't themselves candidates
 // (i.e. that don't satisfy every clue so far) when the field is wide enough
 // for that to be worthwhile.
-function scoutGuess(wordLength: number, remaining: ScoredWord[], guessIndex: number): string[] {
+function scoutGuess(wordLength: number, remaining: ScoredWord[], guessIndex: number): { word: string }[] {
   const remainingWords = remaining.map(({ word }) => word);
   const remainingSet = new Set(remainingWords);
 
   const commonScouts = scoredWords.filter(({ word }) => word.length === wordLength).slice(0, SCOUT_POOL_SIZE);
   const pool = new Set([...remainingWords, ...commonScouts.map(({ word }) => word)]);
 
-  const ranked = Array.from(pool)
-    .map(
-      (word): ScoutCandidate => ({
-        word,
-        bits: entropy(word, remainingWords),
-        isCandidate: remainingSet.has(word),
-        scoredWord: scoredWordsByWord.get(word),
-      }),
-    )
+  return Array.from(pool)
+    .map((word): ScoutCandidate => ({
+      word,
+      bits: entropy(word, remainingWords),
+      isCandidate: remainingSet.has(word),
+      scoredWord: scoredWordsByWord.get(word),
+    }))
     .sort((a, b) => compareScouts(a, b, guessIndex));
-
-  return ranked.slice(0, 8).map(({ word }) => word);
 }
 
 export function makeGuess(wordLength: number, clues: CluedLetter[][] = []): string[] {
@@ -177,18 +196,12 @@ export function makeGuess(wordLength: number, clues: CluedLetter[][] = []): stri
 
   const remaining = scoredWords.filter(({ word }) => word.length === wordLength && re.test(word));
 
-  if (clues.length > 0 && remaining.length > SCOUT_MIN_REMAINING) {
-    return scoutGuess(wordLength, remaining, clues.length);
-  }
+  const guesses =
+    clues.length > 0 && remaining.length > SCOUT_MIN_REMAINING
+      ? scoutGuess(wordLength, remaining, clues.length)
+      : rankGuess(remaining, clues.length);
 
-  const result = remaining
-    .map((scoredWord) => ({
-      ...scoredWord,
-      score: score(scoredWord, clues.length),
-    }))
-    .sort((a, b) => (a.score > b.score ? -1 : 1));
-
-  return result.slice(0, 8).map(({ word }) => word);
+  return guesses.slice(0, 8).map(({ word }) => word);
 }
 
 export function countRemaining(wordLength: number, clues: CluedLetter[][] = []): number {

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { clue } from './clue';
-import { colorToRegExp, compareScouts, countRemaining, makeGuess, toRegExp } from './guess';
+import { colorToRegExp, compareRanks, compareScouts, countRemaining, makeGuess, toRegExp } from './guess';
 
 describe('toRegExp', () => {
   it('matches anything when there are no clues', () => {
@@ -125,6 +125,32 @@ describe('compareScouts', () => {
     const unscored = { word: 'b', bits: 1, isCandidate: true };
     expect(compareScouts(scored, unscored, 1)).toBeLessThan(0);
     expect(compareScouts(unscored, scored, 1)).toBeGreaterThan(0);
+  });
+});
+
+describe('compareRanks', () => {
+  it('ranks more common letters first when usage is equal', () => {
+    const common = { word: 'a', lettersRank: 0, usageRank: -1 };
+    const rare = { word: 'b', lettersRank: 100, usageRank: -1 };
+    expect(compareRanks(common, rare, 1)).toBeLessThan(0);
+  });
+
+  it('ranks a more frequently used target higher, weighted by guess index', () => {
+    const frequent = { word: 'a', lettersRank: 0, usageRank: 0 };
+    const infrequent = { word: 'b', lettersRank: 0, usageRank: 1000 };
+    expect(compareRanks(frequent, infrequent, 1)).toBeLessThan(0);
+  });
+
+  it('ignores the usage bonus entirely on the first guess (guessIndex 0)', () => {
+    const frequent = { word: 'a', lettersRank: 0, usageRank: 0 };
+    const infrequent = { word: 'b', lettersRank: 0, usageRank: 1000 };
+    expect(compareRanks(frequent, infrequent, 0)).toBe(0);
+  });
+
+  it('gives no usage bonus to a word absent from the target list', () => {
+    const nonTarget = { word: 'a', lettersRank: 0, usageRank: -1 };
+    const target = { word: 'b', lettersRank: 0, usageRank: 0 };
+    expect(compareRanks(nonTarget, target, 1)).toBeGreaterThan(0);
   });
 });
 

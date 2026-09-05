@@ -37,6 +37,43 @@ Times launched its own
 [Wordle-solving analysis tool](https://www.nytimes.com/interactive/2022/upshot/wordle-bot.html)
 in April 2022.
 
+## Algorithm
+
+At every turn, Wordleb0t narrows the field to the words consistent with every
+clue you've given so far - the right letters in the right (or wrong) spots,
+and the letters ruled out entirely.
+
+When that field is small (8 or fewer words), Wordleb0t just guesses the most
+promising word left in it, ranked by how common its letters are and, for
+words that have actually been NYT Wordle answers before, how likely NYT is to
+reuse it.
+
+When the field is wider than that, ranking candidates against each other
+stops being enough: a cluster of words that share almost every letter (e.g.
+`wafer`/`wager`/`hater`/`later`/`eager`/...) can trap a guesser into testing
+one look-alike per turn, since no candidate word can distinguish more than
+one of the unconfirmed letters at a time. Wordleb0t instead picks a guess -
+which may not even be a possible answer itself - that best _splits up_ the
+remaining field, using [Shannon
+entropy](https://en.wikipedia.org/wiki/Entropy_(information_theory)) to
+measure how much a guess narrows things down: for each candidate guess,
+Wordleb0t simulates the clue it would get back against every remaining word,
+groups the results by that clue pattern, and scores the guess by how evenly
+and finely that groups the field. A guess that's equally likely to produce
+any of several very different clues carries more information (higher
+entropy) than one that mostly produces the same clue no matter which
+remaining word turns out to be the answer, so it's expected to eliminate more
+of the field in one go regardless of what comes back. Ties go to an actual
+candidate word, since guessing one also has a chance of winning outright.
+
+This is the same information-theoretic idea behind [3Blue1Brown's "Solving
+Wordle using information
+theory"](https://www.youtube.com/watch?v=v68zYyaEmEA) ([writeup
+here](https://www.3blue1brown.com/lessons/wordle)), adapted to run
+efficiently for words of any length and to weigh a candidate's own chance of
+being the answer against pure information gain. The discussion that led to
+it is in [issue #31](https://github.com/carpiediem/wordleb0t/issues/31).
+
 ## For developers
 
 If you can make Wordleb0t smarter, please feel free to
