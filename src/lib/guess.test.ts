@@ -72,7 +72,7 @@ describe('makeGuess', () => {
     // suggest a guess that doesn't itself satisfy every clue (see #31) -
     // narrow further first so this targets the small-field case, where every
     // guess is still expected to be a candidate consistent with the clues.
-    const clues = [clue('adieu', 'stale'), clue('raile', 'stale')];
+    const clues = [clue('adieu', 'stale'), clue('teils', 'stale')];
     const guesses = makeGuess(5, clues);
     guesses.forEach((word) => expect(toRegExp(clues).test(word)).toBe(true));
   });

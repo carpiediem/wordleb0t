@@ -99,14 +99,18 @@ function rankGuess(remaining: ScoredWord[], guessIndex: number): { word: string 
 // realistically split the field any better than just guessing a candidate
 // outright, and forfeits candidates' own chance of being the answer for no
 // benefit. Above it, candidates sharing most of their letters (e.g. wafer/
-// wager/hater/later) become common enough that testing unconfirmed letters
-// via a non-candidate word pays for itself. See #31.
-const SCOUT_MIN_REMAINING = 8;
+// wager/hater/later, or the bound/found/hound/mound/pound/wound cluster)
+// become common enough that testing unconfirmed letters via a non-candidate
+// word pays for itself. See #31.
+const SCOUT_MIN_REMAINING = 3;
 
-// Cap on how many dictionary words (ordered by letter commonality, i.e. the
-// order dictionary-ranked.json is already in) are considered as scouts, to
-// bound the cost of scoring every candidate against every remaining answer.
-const SCOUT_POOL_SIZE = 3000;
+// Scoring a scout costs one entropy() pass per remaining candidate, so the
+// scout pool size is chosen as SCOUT_POOL_BUDGET / (number remaining) - a
+// rough constant-time budget per guess regardless of how wide the field is.
+const SCOUT_POOL_BUDGET = 3_000_000;
+// Always consider at least this many of the most letter-common words, even
+// when the field is wide enough that the budget above would allow fewer.
+const SCOUT_POOL_MIN = 500;
 
 // Packs the gray/yellow/green clue that `guessWord` would get against
 // `target` into a single number, so identical clues (e.g. two different
@@ -187,7 +191,18 @@ function scoutGuess(wordLength: number, remaining: ScoredWord[], guessIndex: num
 
   const remainingSet = new Set(remainingWords);
 
-  const commonScouts = scoredWords.filter(({ word }) => word.length === wordLength).slice(0, SCOUT_POOL_SIZE);
+  // The best scout for a given remaining set is often a word that's globally
+  // rare (e.g. "lymph", to split up bound/found/hound/mound/pound/wound):
+  // what matters is how well it happens to cover this cluster's unconfirmed
+  // letters, not how common its letters are overall. So every dictionary
+  // word of the right length is worth considering as a scout - but scoring
+  // each of them costs one entropy() pass over `remaining`, so the pool size
+  // is capped in inverse proportion to how large `remaining` already is: a
+  // handful of remaining candidates (mound's cluster) can afford the entire
+  // dictionary as scouts, while hundreds of remaining candidates (typical
+  // just after the opening guess) need a smaller pool to stay responsive.
+  const poolSize = Math.max(SCOUT_POOL_MIN, Math.floor(SCOUT_POOL_BUDGET / remainingWords.length));
+  const commonScouts = scoredWords.filter(({ word }) => word.length === wordLength).slice(0, poolSize);
   const pool = new Set([...remainingWords, ...commonScouts.map(({ word }) => word)]);
 
   const ranked = Array.from(pool)
