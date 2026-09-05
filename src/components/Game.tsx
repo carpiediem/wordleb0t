@@ -42,7 +42,7 @@ function Game(props: GameProps) {
 
     const nextClues = [...clues, rowClues];
     const isWon = rowClues.every(({ clue }) => clue === Clue.Correct);
-    const remainingOptions = makeGuess(wordLength, nextClues);
+    const remainingOptions = makeGuess(wordLength, nextClues, props.maxGuesses);
     const isLost = guesses.length === 6 || remainingOptions.length === 0;
 
     setOptionCounts((value) => [...value, countRemaining(wordLength, nextClues)]);

@@ -75,6 +75,11 @@ so how many candidates get considered shrinks as the remaining field grows:
 a handful of remaining words can afford to search the whole dictionary,
 while hundreds need a smaller search to stay responsive.
 
+None of this is worth it on the last guess you're allowed, though: a scout
+that isn't a candidate has no chance of being the answer, while any
+remaining candidate does, so with one guess left Wordleb0t always falls back
+to guessing its best remaining candidate outright.
+
 This is the same information-theoretic idea behind [3Blue1Brown's "Solving
 Wordle using information
 theory"](https://www.youtube.com/watch?v=v68zYyaEmEA) ([writeup
