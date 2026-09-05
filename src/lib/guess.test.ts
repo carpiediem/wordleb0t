@@ -87,6 +87,23 @@ describe('makeGuess', () => {
     expect(guesses.some((word) => !re.test(word))).toBe(true);
   });
 
+  it("doesn't scout on the last available guess, even with a wide field", () => {
+    // Same wide field as above, but with only one guess left: a scout has no
+    // chance of being the answer, while every candidate has some chance, so
+    // every guess offered must still be consistent with the clues.
+    const clues = [clue('nervy', 'water')];
+    const guesses = makeGuess(5, clues, clues.length + 1);
+    const re = toRegExp(clues);
+    guesses.forEach((word) => expect(re.test(word)).toBe(true));
+  });
+
+  it('scouts again once more than one guess remains', () => {
+    const clues = [clue('nervy', 'water')];
+    const guesses = makeGuess(5, clues, clues.length + 2);
+    const re = toRegExp(clues);
+    expect(guesses.some((word) => !re.test(word))).toBe(true);
+  });
+
   it('uses localStorage.INITIAL_GUESS as the opening guess when it matches the word length', () => {
     localStorageMock.INITIAL_GUESS = 'slate';
     expect(makeGuess(5)).toEqual(['slate']);

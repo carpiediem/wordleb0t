@@ -19,7 +19,7 @@ export function solve(answer: string, maxGuesses: number): SolveResult {
   let clues: CluedLetter[][] = [];
 
   for (let guessCount = 1; guessCount <= maxGuesses; guessCount++) {
-    const guess = makeGuess(answer.length, clues)[0];
+    const guess = makeGuess(answer.length, clues, maxGuesses)[0];
     if (!guess) return { steps, guessCount: null }; // no candidates left consistent with the clues so far
 
     const guessClue = clue(guess, answer);

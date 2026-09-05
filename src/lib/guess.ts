@@ -218,7 +218,7 @@ function scoutGuess(wordLength: number, remaining: ScoredWord[], guessIndex: num
   return ranked;
 }
 
-export function makeGuess(wordLength: number, clues: CluedLetter[][] = []): string[] {
+export function makeGuess(wordLength: number, clues: CluedLetter[][] = [], maxGuesses?: number): string[] {
   const re = toRegExp(clues);
 
   if (clues.length === 0 && typeof localStorage !== 'undefined' && localStorage.INITIAL_GUESS?.length === wordLength) {
@@ -227,10 +227,16 @@ export function makeGuess(wordLength: number, clues: CluedLetter[][] = []): stri
 
   const remaining = scoredWords.filter(({ word }) => word.length === wordLength && re.test(word));
 
-  const guesses =
-    clues.length > 0 && remaining.length > SCOUT_MIN_REMAINING
-      ? scoutGuess(wordLength, remaining, clues.length)
-      : rankGuess(remaining, clues.length);
+  // A scout is only worth guessing if there's a later guess to act on what it
+  // reveals - on the last available guess it has no better chance of winning
+  // than any other non-candidate word (i.e. none), while every remaining
+  // candidate has some chance. maxGuesses is optional (callers that aren't
+  // tracking a guess limit, like the worksheet generator, can omit it), in
+  // which case there's no such cutoff.
+  const guessesLeft = maxGuesses === undefined ? Infinity : maxGuesses - clues.length;
+  const shouldScout = clues.length > 0 && remaining.length > SCOUT_MIN_REMAINING && guessesLeft > 1;
+
+  const guesses = shouldScout ? scoutGuess(wordLength, remaining, clues.length) : rankGuess(remaining, clues.length);
 
   return guesses.slice(0, 8).map(({ word }) => word);
 }
