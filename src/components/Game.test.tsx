@@ -82,6 +82,63 @@ describe('Game', () => {
     expect(window.ga).toHaveBeenCalledWith('send', expect.objectContaining({ eventCategory: 'End' }));
   });
 
+  it("lets the user override the editing row's guess by picking another suggestion", () => {
+    const { container } = render(<Game maxGuesses={6} />);
+
+    const select = container.querySelector('select')!;
+    const options = Array.from(select.querySelectorAll('option')).map((option) => option.textContent!);
+    expect(options.length).toBeGreaterThan(1);
+    const alternative = options[1];
+
+    fireEvent.change(select, { target: { value: alternative } });
+
+    const row = editingRow(container);
+    const displayedWord = Array.from(row.querySelectorAll('.Row-letter'))
+      .map((cell) => cell.textContent)
+      .join('');
+    expect(displayedWord).toBe(alternative.toLowerCase());
+  });
+
+  it('submits the actual word after a loss, reports it via ga, and starts a fresh game', () => {
+    const { container } = render(<Game maxGuesses={6} />);
+
+    for (let i = 0; i < 6; i++) {
+      if (screen.queryByRole('button', { name: "Let's play again" })) break;
+      playAbsentRound(container);
+    }
+
+    const input: HTMLInputElement = container.querySelector('#loss-feedback input')!;
+    fireEvent.change(input, { target: { value: 'zesty' } });
+    fireEvent.submit(container.querySelector('#loss-feedback')!);
+
+    expect(window.ga).toHaveBeenCalledWith(
+      'send',
+      expect.objectContaining({ eventCategory: 'End', eventAction: 'specify', eventLabel: 'zesty' }),
+    );
+    expect(screen.getByRole('alert')).toHaveTextContent("Tap the letters to check Wordlebot's guess");
+    expect(screen.queryByText(/Too bad|I give up/)).not.toBeInTheDocument();
+  });
+
+  it('ignores a stray Enter keypress after the game has already ended', () => {
+    const { container } = render(<Game maxGuesses={6} />);
+
+    for (let i = 0; i < 6; i++) {
+      if (screen.queryByRole('button', { name: "Let's play again" })) break;
+      playAbsentRound(container);
+    }
+    expect(screen.getByRole('button', { name: "Let's play again" })).toBeInTheDocument();
+
+    // The last-played row's rowState is still "Editing" by index (Game doesn't
+    // recompute it once the game ends), so Row's keydown listener is still
+    // attached - this exercises handleLockIn's own guard against a lock-in
+    // attempt once gameState is no longer Playing.
+    const gaCallsAfterLoss = (window.ga as ReturnType<typeof vi.fn>).mock.calls.length;
+    fireEvent.keyDown(window as unknown as Window, { key: 'Enter' });
+
+    expect((window.ga as ReturnType<typeof vi.fn>).mock.calls.length).toBe(gaCallsAfterLoss);
+    expect(screen.getByRole('button', { name: "Let's play again" })).toBeInTheDocument();
+  });
+
   it('resets to a fresh game when "play again" is clicked after a win', () => {
     const { container } = render(<Game maxGuesses={6} />);
 
