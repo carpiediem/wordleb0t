@@ -73,12 +73,12 @@ export function GuessSelect({ options, value, onChange }: GuessSelectProps) {
                 {hasMetadata && (
                   <div
                     className="GuessSelect-option-meta"
-                    title={`Splits the remaining words into ${option.bucketCount} groups; worst case leaves ${option.largestBucket} of them`}
+                    title={`Splits the remaining words into ${option.bucketCount} groups; worst case, ${option.largestBucket} words are left`}
                   >
                     <span>
                       🪣 {option.bucketCount} {option.bucketCount === 1 ? 'group' : 'groups'}
                     </span>
-                    <span>📦 {option.largestBucket} worst-case</span>
+                    <span>📉 ≤{option.largestBucket} words left</span>
                   </div>
                 )}
               </li>
