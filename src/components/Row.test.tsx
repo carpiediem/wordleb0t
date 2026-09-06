@@ -91,6 +91,15 @@ describe('Row', () => {
     ]);
   });
 
+  it('ignores a number key outside the word length', () => {
+    renderRow({ word: 'cat', wordLength: 3 });
+    const cell = screen.getByText('c');
+
+    fireEvent.keyDown(window, { key: '9' });
+
+    expect(cell).toHaveClass('letter-unspecified');
+  });
+
   it('ignores number and Enter keys when not editing', () => {
     const onLockIn = vi.fn();
     renderRow({ word: 'cat', rowState: RowState.LockedIn, onLockIn });
