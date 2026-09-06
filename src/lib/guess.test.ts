@@ -1,6 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { clue } from './clue';
-import { colorToRegExp, compareRanks, compareScouts, countRemaining, makeGuess, toRegExp } from './guess';
+import {
+  colorToRegExp,
+  compareRanks,
+  compareScouts,
+  countRemaining,
+  makeGuess,
+  makeGuessOptions,
+  toRegExp,
+} from './guess';
 
 describe('toRegExp', () => {
   it('matches anything when there are no clues', () => {
@@ -116,30 +124,80 @@ describe('makeGuess', () => {
   });
 });
 
+describe('makeGuessOptions', () => {
+  it('includes bucketCount/largestBucket metadata for scouted options', () => {
+    const clues = [clue('nervy', 'water')];
+    const remaining = countRemaining(5, clues);
+    const options = makeGuessOptions(5, clues);
+
+    expect(options.length).toBeGreaterThan(0);
+    options.forEach(({ bucketCount, largestBucket }) => {
+      expect(bucketCount).toBeGreaterThan(0);
+      expect(bucketCount).toBeLessThanOrEqual(remaining);
+      expect(largestBucket).toBeGreaterThan(0);
+      expect(largestBucket).toBeLessThanOrEqual(remaining);
+    });
+  });
+
+  it("omits metadata for small-field options that weren't scored against the remaining field", () => {
+    const clues = [clue('adieu', 'stale'), clue('teils', 'stale')];
+    const options = makeGuessOptions(5, clues);
+
+    options.forEach(({ bucketCount, largestBucket }) => {
+      expect(bucketCount).toBeUndefined();
+      expect(largestBucket).toBeUndefined();
+    });
+  });
+});
+
 describe('compareScouts', () => {
+  const scoutCandidate = (overrides: Partial<Parameters<typeof compareScouts>[0]>) => ({
+    word: 'a',
+    bits: 0,
+    bucketCount: 0,
+    largestBucket: 0,
+    isCandidate: false,
+    ...overrides,
+  });
+
   it('ranks higher entropy first', () => {
-    const higher = { word: 'a', bits: 2, isCandidate: false };
-    const lower = { word: 'b', bits: 1, isCandidate: false };
+    const higher = scoutCandidate({ word: 'a', bits: 2 });
+    const lower = scoutCandidate({ word: 'b', bits: 1 });
     expect(compareScouts(higher, lower, 1)).toBeLessThan(0);
     expect(compareScouts(lower, higher, 1)).toBeGreaterThan(0);
   });
 
   it('breaks an entropy tie in favor of an actual candidate', () => {
-    const candidate = { word: 'a', bits: 1, isCandidate: true };
-    const scout = { word: 'b', bits: 1, isCandidate: false };
+    const candidate = scoutCandidate({ word: 'a', bits: 1, isCandidate: true });
+    const scout = scoutCandidate({ word: 'b', bits: 1, isCandidate: false });
     expect(compareScouts(candidate, scout, 1)).toBeLessThan(0);
     expect(compareScouts(scout, candidate, 1)).toBeGreaterThan(0);
   });
 
   it('breaks a further tie by usage/commonality score', () => {
-    const common = { word: 'a', bits: 1, isCandidate: true, scoredWord: { word: 'a', lettersRank: 0, usageRank: 0 } };
-    const rare = { word: 'b', bits: 1, isCandidate: true, scoredWord: { word: 'b', lettersRank: 100, usageRank: -1 } };
+    const common = scoutCandidate({
+      word: 'a',
+      bits: 1,
+      isCandidate: true,
+      scoredWord: { word: 'a', lettersRank: 0, usageRank: 0 },
+    });
+    const rare = scoutCandidate({
+      word: 'b',
+      bits: 1,
+      isCandidate: true,
+      scoredWord: { word: 'b', lettersRank: 100, usageRank: -1 },
+    });
     expect(compareScouts(common, rare, 1)).toBeLessThan(0);
   });
 
   it('treats a missing scoredWord as the lowest possible score', () => {
-    const scored = { word: 'a', bits: 1, isCandidate: true, scoredWord: { word: 'a', lettersRank: 0, usageRank: 0 } };
-    const unscored = { word: 'b', bits: 1, isCandidate: true };
+    const scored = scoutCandidate({
+      word: 'a',
+      bits: 1,
+      isCandidate: true,
+      scoredWord: { word: 'a', lettersRank: 0, usageRank: 0 },
+    });
+    const unscored = scoutCandidate({ word: 'b', bits: 1, isCandidate: true });
     expect(compareScouts(scored, unscored, 1)).toBeLessThan(0);
     expect(compareScouts(unscored, scored, 1)).toBeGreaterThan(0);
   });

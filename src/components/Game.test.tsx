@@ -50,6 +50,20 @@ describe('Game', () => {
     expect(firstRowCells).toHaveLength(7);
   });
 
+  it("lets the user override the editing row's guess by picking another suggestion", () => {
+    const { container } = render(<Game maxGuesses={6} />);
+
+    fireEvent.click(screen.getByRole('button', { name: makeGuess(5)[0].toUpperCase() }));
+    const alternative = screen.getAllByRole('option')[1].textContent!;
+    fireEvent.click(screen.getByRole('option', { name: alternative }));
+
+    const row = editingRow(container);
+    const displayedWord = Array.from(row.querySelectorAll('.Row-letter'))
+      .map((cell) => cell.textContent)
+      .join('');
+    expect(displayedWord).toBe(alternative.toLowerCase());
+  });
+
   it('declares a win and reports it via ga when every letter is marked correct', () => {
     const { container } = render(<Game maxGuesses={6} />);
 

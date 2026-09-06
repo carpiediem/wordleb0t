@@ -1,7 +1,8 @@
 import { ChangeEvent, useRef, useState, useEffect } from 'react';
 import { Row, RowState } from './Row';
+import { GuessSelect } from './GuessSelect';
 import { Clue, CluedLetter, foundReducer } from '../lib/clue';
-import { makeGuess, countRemaining } from '../lib/guess';
+import { GuessOption, makeGuessOptions, countRemaining } from '../lib/guess';
 
 declare const window: { ga: (action: string, options: Record<string, unknown>) => void };
 
@@ -18,7 +19,7 @@ interface GameProps {
 function Game(props: GameProps) {
   const [wordLength, setWordLength] = useState(5);
   const [gameState, setGameState] = useState(GameState.Playing);
-  const [currentOptions, setCurrentOptions] = useState<string[]>([]);
+  const [currentOptions, setCurrentOptions] = useState<GuessOption[]>([]);
   const [guesses, setGuesses] = useState<string[]>([]);
   const [clues, setClues] = useState<CluedLetter[][]>([]);
   const [optionCounts, setOptionCounts] = useState<number[]>([]);
@@ -29,8 +30,8 @@ function Game(props: GameProps) {
 
   let foundLetters = clues.reduce(foundReducer, []);
 
-  const handleSelect = (event: ChangeEvent<HTMLSelectElement>) => {
-    guesses.splice(-1, 1, event.target.value.toLowerCase());
+  const handleSelect = (word: string) => {
+    guesses.splice(-1, 1, word.toLowerCase());
     setGuesses([...guesses]);
   };
 
@@ -42,7 +43,7 @@ function Game(props: GameProps) {
 
     const nextClues = [...clues, rowClues];
     const isWon = rowClues.every(({ clue }) => clue === Clue.Correct);
-    const remainingOptions = makeGuess(wordLength, nextClues, props.maxGuesses);
+    const remainingOptions = makeGuessOptions(wordLength, nextClues, props.maxGuesses);
     const isLost = guesses.length === 6 || remainingOptions.length === 0;
 
     setOptionCounts((value) => [...value, countRemaining(wordLength, nextClues)]);
@@ -85,7 +86,7 @@ function Game(props: GameProps) {
     setGuesses([]);
     setClues([]);
     setOptionCounts([]);
-    setCurrentOptions(makeGuess(wordLength));
+    setCurrentOptions(makeGuessOptions(wordLength));
     setGameState(GameState.Playing);
   };
 
@@ -112,7 +113,7 @@ function Game(props: GameProps) {
 
   useEffect(() => {
     if (guesses.length > clues.length) return;
-    setGuesses((state = []) => (currentOptions.length ? [...state, currentOptions[0]] : state));
+    setGuesses((state = []) => (currentOptions.length ? [...state, currentOptions[0].word] : state));
   }, [currentOptions, guesses.length, clues.length]);
 
   const tableRows = Array(props.maxGuesses)
@@ -143,11 +144,7 @@ function Game(props: GameProps) {
           {gameState === GameState.Playing && (
             <>
               <h2>I think it&apos;s</h2>
-              <select onChange={handleSelect}>
-                {currentOptions.map((word) => (
-                  <option key={word}>{word.toUpperCase()}</option>
-                ))}
-              </select>
+              <GuessSelect options={currentOptions} value={guesses[guesses.length - 1] || ''} onChange={handleSelect} />
             </>
           )}
 
