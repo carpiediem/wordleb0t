@@ -157,16 +157,21 @@ body.dark .Row-count-label {
   font-weight: bold;
 }
 
-.GuessSelect-toggle {
+/* Two classes, so this beats .Bot-container button's (class + element)
+   specificity regardless of source order - without it, that rule's dark-blue
+   background/white-text styling (meant for the checkmark/undo/play-again
+   buttons) bleeds onto this one too, since it's also a <button> in
+   .Bot-container. */
+.GuessSelect .GuessSelect-toggle {
   display: flex;
   align-items: center;
   gap: 0.2em;
   font: inherit;
-  color: inherit;
+  color: #000;
   background: white;
   border: 1px solid #767676;
-  border-radius: 4px;
-  padding: 0 0.2em;
+  border-radius: 0;
+  padding: 0.1em 0.3em;
   cursor: pointer;
 }
 
