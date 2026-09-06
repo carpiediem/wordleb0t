@@ -150,6 +150,73 @@ body.dark .Row-count-label {
   font-weight: bold;
 }
 
+.GuessSelect {
+  position: relative;
+  display: inline-block;
+  font-size: 2em;
+  font-weight: bold;
+}
+
+.GuessSelect-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.2em;
+  font: inherit;
+  color: inherit;
+  background: white;
+  border: 1px solid #767676;
+  border-radius: 4px;
+  padding: 0 0.2em;
+  cursor: pointer;
+}
+
+.GuessSelect-chevron {
+  font-size: 0.6em;
+}
+
+.GuessSelect-options {
+  position: absolute;
+  z-index: 10;
+  top: 100%;
+  left: 0;
+  margin: 4px 0 0;
+  padding: 4px 0;
+  list-style: none;
+  min-width: 100%;
+  max-height: 60vh;
+  overflow-y: auto;
+  white-space: nowrap;
+  text-align: left;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.GuessSelect-option {
+  padding: 0.2em 0.5em;
+  cursor: pointer;
+  color: #222;
+}
+
+.GuessSelect-option:hover {
+  background: #eef3fb;
+}
+
+.GuessSelect-option-selected,
+.GuessSelect-option-selected:hover {
+  background: #4a7fdb;
+  color: white;
+}
+
+.GuessSelect-option-meta {
+  display: flex;
+  gap: 0.8em;
+  font-size: 0.4em;
+  font-weight: normal;
+  opacity: 0.8;
+}
+
 .Bot-container img {
   width: 100px;
 }
