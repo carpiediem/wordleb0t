@@ -16,6 +16,21 @@ const scoredWords = dictionary.map((word, lettersRank) => ({
 
 const scoredWordsByWord = new Map(scoredWords.map((scoredWord) => [scoredWord.word, scoredWord]));
 
+// Every lookup below needs "every word of this length," and dictionary-ranked.json
+// interleaves all lengths together - grouping once here avoids re-scanning the
+// entire (~150k-word) dictionary on every call just to find the ~10-30k words of
+// the requested length.
+const scoredWordsByLength = new Map<number, ScoredWord[]>();
+for (const scoredWord of scoredWords) {
+  const words = scoredWordsByLength.get(scoredWord.word.length);
+  if (words) words.push(scoredWord);
+  else scoredWordsByLength.set(scoredWord.word.length, [scoredWord]);
+}
+
+function wordsOfLength(wordLength: number): ScoredWord[] {
+  return scoredWordsByLength.get(wordLength) ?? [];
+}
+
 export function toRegExp(clues: CluedLetter[][]) {
   if (clues.length === 0) return /(?:)/;
 
@@ -202,7 +217,7 @@ function scoutGuess(wordLength: number, remaining: ScoredWord[], guessIndex: num
   // dictionary as scouts, while hundreds of remaining candidates (typical
   // just after the opening guess) need a smaller pool to stay responsive.
   const poolSize = Math.max(SCOUT_POOL_MIN, Math.floor(SCOUT_POOL_BUDGET / remainingWords.length));
-  const commonScouts = scoredWords.filter(({ word }) => word.length === wordLength).slice(0, poolSize);
+  const commonScouts = wordsOfLength(wordLength).slice(0, poolSize);
   const pool = new Set([...remainingWords, ...commonScouts.map(({ word }) => word)]);
 
   const ranked = Array.from(pool)
@@ -225,7 +240,7 @@ export function makeGuess(wordLength: number, clues: CluedLetter[][] = [], maxGu
     return [localStorage.INITIAL_GUESS];
   }
 
-  const remaining = scoredWords.filter(({ word }) => word.length === wordLength && re.test(word));
+  const remaining = wordsOfLength(wordLength).filter(({ word }) => re.test(word));
 
   // A scout is only worth guessing if there's a later guess to act on what it
   // reveals - on the last available guess it has no better chance of winning
@@ -247,5 +262,5 @@ export function makeGuess(wordLength: number, clues: CluedLetter[][] = [], maxGu
 
 export function countRemaining(wordLength: number, clues: CluedLetter[][] = []): number {
   const re = toRegExp(clues);
-  return scoredWords.reduce((count, { word }) => (word.length === wordLength && re.test(word) ? count + 1 : count), 0);
+  return wordsOfLength(wordLength).reduce((count, { word }) => (re.test(word) ? count + 1 : count), 0);
 }
