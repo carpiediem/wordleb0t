@@ -40,7 +40,7 @@ describe('GuessSelect', () => {
 
     const options = screen.getAllByRole('option');
     expect(options[0]).toHaveTextContent('🪣 12 groups');
-    expect(options[0]).toHaveTextContent('📦 4 worst-case');
+    expect(options[0]).toHaveTextContent('📉 ≤4 words left');
     expect(options[1]).toHaveTextContent('🪣 9 groups');
   });
 
@@ -49,7 +49,7 @@ describe('GuessSelect', () => {
     fireEvent.click(screen.getByRole('button'));
 
     expect(screen.queryByText(/🪣/)).not.toBeInTheDocument();
-    expect(screen.queryByText(/📦/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/📉/)).not.toBeInTheDocument();
   });
 
   it('singularizes "group" for a single bucket', () => {
