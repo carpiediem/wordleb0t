@@ -234,6 +234,10 @@ export function makeGuess(wordLength: number, clues: CluedLetter[][] = [], maxGu
   // tracking a guess limit, like the worksheet generator, can omit it), in
   // which case there's no such cutoff.
   const guessesLeft = maxGuesses === undefined ? Infinity : maxGuesses - clues.length;
+  // For refernece, if we remove the clues.length criterion and run scoutGuess() against
+  // the full dictionary, the top suggestions are tares, lares,  rales, rates; not much
+  // more optimized than what you get from rankGuess(): raine, irate, retia. The downside
+  // is that it takes ~168 million clue simulations and more than 25 seconds.
   const shouldScout = clues.length > 0 && remaining.length > SCOUT_MIN_REMAINING && guessesLeft > 1;
 
   const guesses = shouldScout ? scoutGuess(wordLength, remaining, clues.length) : rankGuess(remaining, clues.length);
