@@ -106,7 +106,7 @@ export function compareRanks(a: ScoredWord, b: ScoredWord, guessIndex: number): 
   return score(b, guessIndex) - score(a, guessIndex);
 }
 
-function rankGuess(remaining: ScoredWord[], guessIndex: number): { word: string }[] {
+function rankGuess(remaining: ScoredWord[], guessIndex: number): ScoredWord[] {
   return [...remaining].sort((a, b) => compareRanks(a, b, guessIndex));
 }
 
@@ -140,11 +140,22 @@ function clueSignature(guessWord: string, target: string): number {
   return signature;
 }
 
+type EntropyResult = {
+  bits: number;
+  // How many distinct clue patterns (buckets) `guessWord` splits `remaining`
+  // into, and the size of the largest of them - a worst-case measure of how
+  // many candidates could still remain after this guess. Surfaced to the UI
+  // (see #34) since bits alone doesn't give an intuitive sense of "how much
+  // does this actually narrow things down."
+  bucketCount: number;
+  largestBucket: number;
+};
+
 // Shannon entropy, in bits, of the partition `guessWord` induces over
 // `remaining` when each remaining candidate is equally likely to be the
 // answer. Higher entropy means the guess is expected to eliminate more
 // candidates regardless of which clue comes back.
-function entropy(guessWord: string, remaining: string[]): number {
+function entropy(guessWord: string, remaining: string[]): EntropyResult {
   // Group `remaining` by the clue signature guessing `guessWord` would
   // produce against each of them - e.g. every candidate that would turn
   // "wafer" all-gray lands in one bucket, every one that would turn it
@@ -159,16 +170,20 @@ function entropy(guessWord: string, remaining: string[]): number {
   }
 
   let bits = 0;
+  let largestBucket = 0;
   for (const count of buckets.values()) {
     const p = count / remaining.length;
     bits -= p * Math.log2(p);
+    if (count > largestBucket) largestBucket = count;
   }
-  return bits;
+  return { bits, bucketCount: buckets.size, largestBucket };
 }
 
 type ScoutCandidate = {
   word: string;
   bits: number;
+  bucketCount: number;
+  largestBucket: number;
   isCandidate: boolean;
   scoredWord?: ScoredWord;
 };
@@ -191,13 +206,13 @@ export function compareScouts(a: ScoutCandidate, b: ScoutCandidate, guessIndex: 
 // every answer whose first guess comes back all-gray reaches guess 2 with
 // an identical remaining set. Caching the ranked result per (guessIndex,
 // remaining set) avoids redoing that work for a set already seen.
-const scoutCache = new Map<string, { word: string }[]>();
+const scoutCache = new Map<string, ScoutCandidate[]>();
 
 // Picks a guess to maximize information gain about which remaining candidate
 // is the answer, considering scouting words that aren't themselves candidates
 // (i.e. that don't satisfy every clue so far) when the field is wide enough
 // for that to be worthwhile.
-function scoutGuess(wordLength: number, remaining: ScoredWord[], guessIndex: number): { word: string }[] {
+function scoutGuess(wordLength: number, remaining: ScoredWord[], guessIndex: number): ScoutCandidate[] {
   const remainingWords = remaining.map(({ word }) => word);
 
   const cacheKey = `${guessIndex}:${remainingWords.join(',')}`;
@@ -221,23 +236,38 @@ function scoutGuess(wordLength: number, remaining: ScoredWord[], guessIndex: num
   const pool = new Set([...remainingWords, ...commonScouts.map(({ word }) => word)]);
 
   const ranked = Array.from(pool)
-    .map((word): ScoutCandidate => ({
-      word,
-      bits: entropy(word, remainingWords),
-      isCandidate: remainingSet.has(word),
-      scoredWord: scoredWordsByWord.get(word),
-    }))
+    .map((word): ScoutCandidate => {
+      const { bits, bucketCount, largestBucket } = entropy(word, remainingWords);
+      return {
+        word,
+        bits,
+        bucketCount,
+        largestBucket,
+        isCandidate: remainingSet.has(word),
+        scoredWord: scoredWordsByWord.get(word),
+      };
+    })
     .sort((a, b) => compareScouts(a, b, guessIndex));
 
   scoutCache.set(cacheKey, ranked);
   return ranked;
 }
 
-export function makeGuess(wordLength: number, clues: CluedLetter[][] = [], maxGuesses?: number): string[] {
+// A guess option, with the entropy-scouting metadata (see #34) present only
+// when it was chosen by scoutGuess - rankGuess's candidates don't have a
+// meaningful bucketCount/largestBucket, since they were never scored against
+// the remaining field that way.
+export type GuessOption = {
+  word: string;
+  bucketCount?: number;
+  largestBucket?: number;
+};
+
+export function makeGuessOptions(wordLength: number, clues: CluedLetter[][] = [], maxGuesses?: number): GuessOption[] {
   const re = toRegExp(clues);
 
   if (clues.length === 0 && typeof localStorage !== 'undefined' && localStorage.INITIAL_GUESS?.length === wordLength) {
-    return [localStorage.INITIAL_GUESS];
+    return [{ word: localStorage.INITIAL_GUESS }];
   }
 
   const remaining = wordsOfLength(wordLength).filter(({ word }) => re.test(word));
@@ -257,7 +287,11 @@ export function makeGuess(wordLength: number, clues: CluedLetter[][] = [], maxGu
 
   const guesses = shouldScout ? scoutGuess(wordLength, remaining, clues.length) : rankGuess(remaining, clues.length);
 
-  return guesses.slice(0, 8).map(({ word }) => word);
+  return guesses.slice(0, 8);
+}
+
+export function makeGuess(wordLength: number, clues: CluedLetter[][] = [], maxGuesses?: number): string[] {
+  return makeGuessOptions(wordLength, clues, maxGuesses).map(({ word }) => word);
 }
 
 export function countRemaining(wordLength: number, clues: CluedLetter[][] = []): number {

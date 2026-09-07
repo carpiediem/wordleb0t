@@ -53,12 +53,9 @@ describe('Game', () => {
   it("lets the user override the editing row's guess by picking another suggestion", () => {
     const { container } = render(<Game maxGuesses={6} />);
 
-    const select = container.querySelector('select')!;
-    const options = Array.from(select.querySelectorAll('option')).map((option) => option.textContent!);
-    expect(options.length).toBeGreaterThan(1);
-    const alternative = options[1];
-
-    fireEvent.change(select, { target: { value: alternative } });
+    fireEvent.click(screen.getByRole('button', { name: makeGuess(5)[0].toUpperCase() }));
+    const alternative = screen.getAllByRole('option')[1].textContent!;
+    fireEvent.click(screen.getByRole('option', { name: alternative }));
 
     const row = editingRow(container);
     const displayedWord = Array.from(row.querySelectorAll('.Row-letter'))
