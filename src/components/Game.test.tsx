@@ -50,6 +50,63 @@ describe('Game', () => {
     expect(firstRowCells).toHaveLength(7);
   });
 
+  it("lets the user override the editing row's guess by picking another suggestion", () => {
+    const { container } = render(<Game maxGuesses={6} />);
+
+    const select = container.querySelector('select')!;
+    const options = Array.from(select.querySelectorAll('option')).map((option) => option.textContent!);
+    expect(options.length).toBeGreaterThan(1);
+    const alternative = options[1];
+
+    fireEvent.change(select, { target: { value: alternative } });
+
+    const row = editingRow(container);
+    const displayedWord = Array.from(row.querySelectorAll('.Row-letter'))
+      .map((cell) => cell.textContent)
+      .join('');
+    expect(displayedWord).toBe(alternative.toLowerCase());
+  });
+
+  it('submits the actual word after a loss, reports it via ga, and starts a fresh game', () => {
+    const { container } = render(<Game maxGuesses={6} />);
+
+    for (let i = 0; i < 6; i++) {
+      if (screen.queryByRole('button', { name: "Let's play again" })) break;
+      playAbsentRound(container);
+    }
+
+    const input: HTMLInputElement = container.querySelector('#loss-feedback input')!;
+    fireEvent.change(input, { target: { value: 'zesty' } });
+    fireEvent.submit(container.querySelector('#loss-feedback')!);
+
+    expect(window.ga).toHaveBeenCalledWith(
+      'send',
+      expect.objectContaining({ eventCategory: 'End', eventAction: 'specify', eventLabel: 'zesty' }),
+    );
+    expect(screen.getByRole('alert')).toHaveTextContent("Tap the letters to check Wordlebot's guess");
+    expect(screen.queryByText(/Too bad|I give up/)).not.toBeInTheDocument();
+  });
+
+  it('ignores a stray Enter keypress after the game has already ended', () => {
+    const { container } = render(<Game maxGuesses={6} />);
+
+    for (let i = 0; i < 6; i++) {
+      if (screen.queryByRole('button', { name: "Let's play again" })) break;
+      playAbsentRound(container);
+    }
+    expect(screen.getByRole('button', { name: "Let's play again" })).toBeInTheDocument();
+
+    // The last-played row's rowState is still "Editing" by index (Game doesn't
+    // recompute it once the game ends), so Row's keydown listener is still
+    // attached - this exercises handleLockIn's own guard against a lock-in
+    // attempt once gameState is no longer Playing.
+    const gaCallsAfterLoss = (window.ga as ReturnType<typeof vi.fn>).mock.calls.length;
+    fireEvent.keyDown(window as unknown as Window, { key: 'Enter' });
+
+    expect((window.ga as ReturnType<typeof vi.fn>).mock.calls.length).toBe(gaCallsAfterLoss);
+    expect(screen.getByRole('button', { name: "Let's play again" })).toBeInTheDocument();
+  });
+
   it('declares a win and reports it via ga when every letter is marked correct', () => {
     const { container } = render(<Game maxGuesses={6} />);
 
@@ -108,5 +165,40 @@ describe('Game', () => {
     fireEvent.click(container.querySelector('.undo')!);
 
     expect(container.querySelectorAll('.undo')).toHaveLength(0);
+  });
+
+  function rowLetters(row: HTMLTableRowElement): string {
+    return Array.from(row.querySelectorAll('.Row-letter'))
+      .map((cell) => cell.textContent)
+      .join('');
+  }
+
+  function rowColors(row: HTMLTableRowElement): string[] {
+    return Array.from(row.querySelectorAll('.Row-letter')).map((cell) =>
+      Array.from(cell.classList).find((c) => c.startsWith('letter-'))!,
+    );
+  }
+
+  it("reverts an undone row's own guess, colors, and offered options to how they looked before it was locked in", () => {
+    const { container } = render(<Game maxGuesses={6} />);
+
+    playAbsentRound(container); // locks in row 0
+
+    const row1 = editingRow(container);
+    const row1Word = rowLetters(row1);
+    playAbsentRound(container); // locks in row 1, marking it all-Absent
+
+    const row2 = editingRow(container);
+    const row2Word = rowLetters(row2);
+    // Sanity check this scenario actually exercises the bug: row 2's
+    // auto-filled guess must differ from row 1's, or undoing row 1 and
+    // getting row 2's word back by coincidence wouldn't prove anything.
+    expect(row2Word).not.toBe(row1Word);
+
+    fireEvent.click(container.querySelectorAll('.undo')[1]); // undo row 1
+
+    const reopenedRow1 = editingRow(container);
+    expect(rowLetters(reopenedRow1)).toBe(row1Word);
+    expect(rowColors(reopenedRow1)).toEqual(Array.from(row1Word).map(() => 'letter-absent'));
   });
 });

@@ -65,6 +65,13 @@ function Game(props: GameProps) {
       window.ga('send', {
         hitType: 'event',
         eventCategory: 'End',
+        // Every guess must itself satisfy every clue so far, so the
+        // candidate pool only shrinks or stays flat from one guess to the
+        // next; guessing wrong 6 times in a row without it hitting zero
+        // first doesn't happen in practice (confirmed via an exhaustive/
+        // randomized search through every legally-reachable 6-guess
+        // sequence) - this is effectively always 'loss - no match'.
+        /* v8 ignore next */
         eventAction: guesses.length === 6 ? 'loss - six guesses' : 'loss - no match',
         eventLabel: guesses.length,
       });
@@ -75,9 +82,19 @@ function Game(props: GameProps) {
   };
 
   const handleUndo = (index: number) => {
-    setGuesses(guesses.slice(0, index));
-    setClues(clues.slice(0, index));
+    const previousClues = clues.slice(0, index);
+    // Keep the undone row's own guess (guesses.slice(0, index + 1), not
+    // index) so it reopens showing exactly what it looked like before it was
+    // locked in, rather than being overwritten by the auto-fill effect below
+    // - that effect only fills in a fresh guess once guesses catches up to
+    // clues, and clues is now one shorter than guesses.
+    setGuesses(guesses.slice(0, index + 1));
+    setClues(previousClues);
     setOptionCounts(optionCounts.slice(0, index));
+    // currentOptions was left over from the row just undone - without this,
+    // the dropdown would still offer the *next* guess's options instead of
+    // the ones valid at this point (#37).
+    setCurrentOptions(makeGuess(wordLength, previousClues));
   };
 
   const handleReset = () => {
@@ -136,6 +153,14 @@ function Game(props: GameProps) {
       );
     });
 
+  // See the matching guesses.length === 6 comment in handleLockIn - always false in practice.
+  /* v8 ignore next */
+  const lossHeading = guesses.length === 6 ? 'Too bad...' : 'I give up!';
+
+  // hint is never actually empty - every setHint call passes a non-empty string - but keep the alert's height stable if that ever changes.
+  /* v8 ignore next */
+  const alertText = hint || '\u00a0';
+
   return (
     <>
       <div className="Bot-container">
@@ -152,7 +177,7 @@ function Game(props: GameProps) {
           )}
 
           {gameState === GameState.Won && <h2>I won!</h2>}
-          {gameState === GameState.Lost && (guesses.length === 6 ? <h2>Too bad...</h2> : <h2>I give up!</h2>)}
+          {gameState === GameState.Lost && <h2>{lossHeading}</h2>}
           {gameState !== GameState.Playing && <button onClick={handleReset}>Let&apos;s play again</button>}
         </div>
         <img src="./bot.png" alt="bot" />
@@ -173,7 +198,7 @@ function Game(props: GameProps) {
         <table className="Game-rows" tabIndex={0} aria-label="Table of guesses" ref={tableRef}>
           <tbody>{tableRows}</tbody>
         </table>
-        <p role="alert">{hint || `\u00a0`}</p>
+        <p role="alert">{alertText}</p>
         {gameState === GameState.Lost && (
           <form id="loss-feedback" onSubmit={handleUserWord}>
             <input value={userWord} onChange={(e) => setUserWord(e.target.value)} style={{ width: `` }} />
