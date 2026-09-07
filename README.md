@@ -30,7 +30,10 @@ color of the of the associated letter.
 
 The core of this repository was forked from
 [@chordbug](https://twitter.com/chordbug)'s excellent
-[hello-wordl](https://github.com/lynn/hello-wordl) project.
+[hello-wordl](https://github.com/lynn/hello-wordl) project, including
+[@lynn](https://github.com/lynn)'s initial editing of Peter
+Norvig's [word frequency list](http://norvig.com/mayzner.html) (derived
+from the Google Books Ngrams dataset).
 
 Wordleb0t was released in January 2022, several months before the New York
 Times launched its own
