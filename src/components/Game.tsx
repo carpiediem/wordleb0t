@@ -65,12 +65,11 @@ function Game(props: GameProps) {
       window.ga('send', {
         hitType: 'event',
         eventCategory: 'End',
-        // Every guess must itself satisfy every clue so far, so the
-        // candidate pool only shrinks or stays flat from one guess to the
-        // next; guessing wrong 6 times in a row without it hitting zero
-        // first doesn't happen in practice (confirmed via an exhaustive/
-        // randomized search through every legally-reachable 6-guess
-        // sequence) - this is effectively always 'loss - no match'.
+        // Scouting narrows the field aggressively enough now that guessing
+        // wrong 6 times in a row without exhausting every remaining candidate
+        // first doesn't happen in practice (confirmed via npm run test:nyt
+        // and an exhaustive/randomized search through every legally-reachable
+        // 6-guess sequence) - this is effectively always 'loss - no match'.
         /* v8 ignore next */
         eventAction: guesses.length === 6 ? 'loss - six guesses' : 'loss - no match',
         eventLabel: guesses.length,
