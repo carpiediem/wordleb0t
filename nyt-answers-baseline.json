@@ -1,20 +1,19 @@
 {
   "played": 2315,
-  "wins": 2254,
-  "winPct": 97.37,
+  "wins": 2256,
+  "winPct": 97.45,
   "avgGuesses": 3.83,
   "currentStreak": 20,
   "maxStreak": 342,
   "distribution": [
     0,
     120,
-    762,
+    764,
     878,
     370,
     124
   ],
   "failures": [
-    "admin",
     "bitty",
     "blare",
     "boney",
@@ -46,7 +45,6 @@
     "hater",
     "hound",
     "hussy",
-    "inbox",
     "jerky",
     "krill",
     "latch",
@@ -76,6 +74,6 @@
     "wound",
     "wrack"
   ],
-  "updatedAt": "2026-08-19T04:44:48.767Z",
-  "sha": "5f380348b31370076765c636446ce152eafb74f5"
+  "updatedAt": "2026-09-07T17:26:19.497Z",
+  "sha": "600189389c2f2aa0fd08682c14e8408ca2595f6e"
 }
