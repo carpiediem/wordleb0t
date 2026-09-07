@@ -20,24 +20,27 @@ import type { GuessOption } from '../lib/guess';
 // them for any other guess: against every length-5 dictionary word (the
 // full field a fresh game starts with), how many distinct clue-pattern
 // groups does this guess split it into, and how big is the largest one.
+// Entries are ordered by how well each actually performs on that measure
+// (highest entropy - the most distinct, evenly-split groups - first), not
+// by which of the three source lists it came from.
 //
 // Regenerate this list (and its metadata) if the dictionary changes enough
 // to plausibly shift these rankings.
 export const openingGuesses: Record<number, GuessOption[]> = {
   5: [
-    { word: 'raine', bucketCount: 176, largestBucket: 1207 },
-    { word: 'irate', bucketCount: 163, largestBucket: 1184 },
-    { word: 'retia', bucketCount: 182, largestBucket: 1195 },
     { word: 'tares', bucketCount: 212, largestBucket: 858 },
     { word: 'lares', bucketCount: 192, largestBucket: 832 },
     { word: 'rales', bucketCount: 182, largestBucket: 832 },
     { word: 'rates', bucketCount: 196, largestBucket: 858 },
+    { word: 'raise', bucketCount: 178, largestBucket: 882 },
+    { word: 'slate', bucketCount: 190, largestBucket: 865 },
+    { word: 'stare', bucketCount: 176, largestBucket: 858 },
+    { word: 'arise', bucketCount: 180, largestBucket: 882 },
+    { word: 'raine', bucketCount: 176, largestBucket: 1207 },
+    { word: 'irate', bucketCount: 163, largestBucket: 1184 },
+    { word: 'retia', bucketCount: 182, largestBucket: 1195 },
+    { word: 'crane', bucketCount: 168, largestBucket: 1578 },
     { word: 'adieu', bucketCount: 121, largestBucket: 1709 },
     { word: 'audio', bucketCount: 141, largestBucket: 2202 },
-    { word: 'stare', bucketCount: 176, largestBucket: 858 },
-    { word: 'slate', bucketCount: 190, largestBucket: 865 },
-    { word: 'raise', bucketCount: 178, largestBucket: 882 },
-    { word: 'crane', bucketCount: 168, largestBucket: 1578 },
-    { word: 'arise', bucketCount: 180, largestBucket: 882 },
   ],
 };

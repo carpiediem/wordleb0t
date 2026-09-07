@@ -44,6 +44,21 @@ describe('GuessSelect', () => {
     expect(options[1]).toHaveTextContent('🪣 9 groups');
   });
 
+  it('formats large metadata numbers with a thousands separator', () => {
+    render(
+      <GuessSelect
+        options={[{ word: 'slate', bucketCount: 1234, largestBucket: 5678 }]}
+        value="slate"
+        onChange={() => {}}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button'));
+
+    const option = screen.getByRole('option');
+    expect(option).toHaveTextContent('🪣 1,234 groups');
+    expect(option).toHaveTextContent('📉 ≤5,678 words left');
+  });
+
   it("omits the metadata row for an option that doesn't have it", () => {
     render(<GuessSelect options={[{ word: 'slate' }]} value="slate" onChange={() => {}} />);
     fireEvent.click(screen.getByRole('button'));
