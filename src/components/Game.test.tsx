@@ -54,8 +54,11 @@ describe('Game', () => {
     const { container } = render(<Game maxGuesses={6} />);
 
     fireEvent.click(screen.getByRole('button', { name: makeGuess(5)[0].toUpperCase() }));
-    const alternative = screen.getAllByRole('option')[1].textContent!;
-    fireEvent.click(screen.getByRole('option', { name: alternative }));
+    // Curated opening guesses (see #41) always carry metadata, so an option's
+    // full textContent includes its subtitle - pull just the word itself.
+    const alternativeOption = screen.getAllByRole('option')[1];
+    const alternative = alternativeOption.querySelector('.GuessSelect-option-word')!.textContent!;
+    fireEvent.click(alternativeOption);
 
     const row = editingRow(container);
     const displayedWord = Array.from(row.querySelectorAll('.Row-letter'))
