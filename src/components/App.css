@@ -165,18 +165,20 @@ body.dark .Row-count-label {
 .GuessSelect .GuessSelect-toggle {
   display: flex;
   align-items: center;
-  gap: 0.2em;
+  gap: 0.1em;
   font: inherit;
   color: #000;
   background: white;
   border: 1px solid #767676;
-  border-radius: 0;
-  padding: 0.1em 0.3em;
+  border-radius: 4px;
+  padding: 0.2em;
+  padding-right: 0.1em;
   cursor: pointer;
 }
 
 .GuessSelect-chevron {
   font-size: 0.6em;
+  margin-top: -10px;
 }
 
 .GuessSelect-options {
@@ -231,7 +233,7 @@ body.dark .Row-count-label {
   background-color: #195272;
   color: white;
   font-weight: bold;
-  margin-top: 1em;
+  margin-top: 0.2em;
   padding: 1em;
   border-radius: 0.5em;
   border: none;
