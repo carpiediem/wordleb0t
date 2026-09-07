@@ -75,9 +75,19 @@ function Game(props: GameProps) {
   };
 
   const handleUndo = (index: number) => {
-    setGuesses(guesses.slice(0, index));
-    setClues(clues.slice(0, index));
+    const previousClues = clues.slice(0, index);
+    // Keep the undone row's own guess (guesses.slice(0, index + 1), not
+    // index) so it reopens showing exactly what it looked like before it was
+    // locked in, rather than being overwritten by the auto-fill effect below
+    // - that effect only fills in a fresh guess once guesses catches up to
+    // clues, and clues is now one shorter than guesses.
+    setGuesses(guesses.slice(0, index + 1));
+    setClues(previousClues);
     setOptionCounts(optionCounts.slice(0, index));
+    // currentOptions was left over from the row just undone - without this,
+    // the dropdown would still offer the *next* guess's options instead of
+    // the ones valid at this point (#37).
+    setCurrentOptions(makeGuess(wordLength, previousClues));
   };
 
   const handleReset = () => {

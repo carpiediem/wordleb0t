@@ -109,4 +109,39 @@ describe('Game', () => {
 
     expect(container.querySelectorAll('.undo')).toHaveLength(0);
   });
+
+  function rowLetters(row: HTMLTableRowElement): string {
+    return Array.from(row.querySelectorAll('.Row-letter'))
+      .map((cell) => cell.textContent)
+      .join('');
+  }
+
+  function rowColors(row: HTMLTableRowElement): string[] {
+    return Array.from(row.querySelectorAll('.Row-letter')).map((cell) =>
+      Array.from(cell.classList).find((c) => c.startsWith('letter-'))!,
+    );
+  }
+
+  it("reverts an undone row's own guess, colors, and offered options to how they looked before it was locked in", () => {
+    const { container } = render(<Game maxGuesses={6} />);
+
+    playAbsentRound(container); // locks in row 0
+
+    const row1 = editingRow(container);
+    const row1Word = rowLetters(row1);
+    playAbsentRound(container); // locks in row 1, marking it all-Absent
+
+    const row2 = editingRow(container);
+    const row2Word = rowLetters(row2);
+    // Sanity check this scenario actually exercises the bug: row 2's
+    // auto-filled guess must differ from row 1's, or undoing row 1 and
+    // getting row 2's word back by coincidence wouldn't prove anything.
+    expect(row2Word).not.toBe(row1Word);
+
+    fireEvent.click(container.querySelectorAll('.undo')[1]); // undo row 1
+
+    const reopenedRow1 = editingRow(container);
+    expect(rowLetters(reopenedRow1)).toBe(row1Word);
+    expect(rowColors(reopenedRow1)).toEqual(Array.from(row1Word).map(() => 'letter-absent'));
+  });
 });
