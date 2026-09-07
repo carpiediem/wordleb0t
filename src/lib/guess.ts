@@ -1,5 +1,6 @@
 import dictionary from '../data/dictionary-ranked.json';
 import targets from '../data/targets.json';
+import { openingGuesses } from '../data/openingGuesses';
 import { clue as clueFor, Clue, CluedLetter } from './clue';
 
 type ScoredWord = {
@@ -270,6 +271,17 @@ export function makeGuessOptions(wordLength: number, clues: CluedLetter[][] = []
     return [{ word: localStorage.INITIAL_GUESS }];
   }
 
+  // The opening guess doesn't depend on anything about this particular game,
+  // so for word lengths with a curated list (see #41), use it instead of
+  // computing rankGuess()'s dynamic picks - a full scoutGuess() search here
+  // would take ~25s (see openingGuesses.ts for how that search's results
+  // were folded into the curated list), far too slow to run at the start of
+  // every game, and rankGuess() alone is both less informative and less
+  // interesting than a list that also includes real players' favorites.
+  if (clues.length === 0 && openingGuesses[wordLength]) {
+    return openingGuesses[wordLength];
+  }
+
   const remaining = wordsOfLength(wordLength).filter(({ word }) => re.test(word));
 
   // A scout is only worth guessing if there's a later guess to act on what it
@@ -279,10 +291,6 @@ export function makeGuessOptions(wordLength: number, clues: CluedLetter[][] = []
   // tracking a guess limit, like the worksheet generator, can omit it), in
   // which case there's no such cutoff.
   const guessesLeft = maxGuesses === undefined ? Infinity : maxGuesses - clues.length;
-  // For refernece, if we remove the clues.length criterion and run scoutGuess() against
-  // the full dictionary, the top suggestions are tares, lares,  rales, rates; not much
-  // more optimized than what you get from rankGuess(): raine, irate, retia. The downside
-  // is that it takes ~168 million clue simulations and more than 25 seconds.
   const shouldScout = clues.length > 0 && remaining.length > SCOUT_MIN_REMAINING && guessesLeft > 1;
 
   const guesses = shouldScout ? scoutGuess(wordLength, remaining, clues.length) : rankGuess(remaining, clues.length);

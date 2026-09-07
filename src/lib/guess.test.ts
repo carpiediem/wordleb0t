@@ -68,8 +68,12 @@ describe('makeGuess', () => {
     vi.unstubAllGlobals();
   });
 
-  it('returns candidates consistent with the clues so far, best guesses first', () => {
-    const guesses = makeGuess(5);
+  it('returns candidates consistent with the clues so far, best guesses first, capped at 8', () => {
+    // A curated list (see #41) replaces the dynamic ranking for the very
+    // first guess when word length 5 - use a second guess instead to
+    // exercise the ordinary dynamic-ranking, 8-result-cap path.
+    const clues = [clue('adieu', 'stale')];
+    const guesses = makeGuess(5, clues);
     expect(guesses.length).toBeGreaterThan(0);
     expect(guesses.length).toBeLessThanOrEqual(8);
     guesses.forEach((word) => expect(word).toHaveLength(5));
@@ -122,6 +126,19 @@ describe('makeGuess', () => {
     const guesses = makeGuess(4);
     expect(guesses).not.toEqual(['slate']);
   });
+
+  it('uses the curated opening list for a word length that has one (#41)', () => {
+    const guesses = makeGuess(5);
+    expect(guesses).toContain('raine'); // rankGuess()'s own top pick
+    expect(guesses).toContain('tares'); // scoutGuess()'s top pick by entropy
+    expect(guesses).toContain('adieu'); // a popular real-player opener
+  });
+
+  it("falls back to the dynamic ranking for a word length that isn't curated", () => {
+    const guesses = makeGuess(4);
+    expect(guesses).not.toContain('adieu'); // 5 letters, couldn't appear for length 4 anyway
+    guesses.forEach((word) => expect(word).toHaveLength(4));
+  });
 });
 
 describe('makeGuessOptions', () => {
@@ -146,6 +163,16 @@ describe('makeGuessOptions', () => {
     options.forEach(({ bucketCount, largestBucket }) => {
       expect(bucketCount).toBeUndefined();
       expect(largestBucket).toBeUndefined();
+    });
+  });
+
+  it('includes precomputed metadata for every curated opening option (#41)', () => {
+    const options = makeGuessOptions(5);
+
+    expect(options.length).toBeGreaterThan(8); // wider than the usual 8-result cap
+    options.forEach(({ bucketCount, largestBucket }) => {
+      expect(bucketCount).toBeGreaterThan(0);
+      expect(largestBucket).toBeGreaterThan(0);
     });
   });
 });
