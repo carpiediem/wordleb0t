@@ -8,11 +8,20 @@ describe('BucketList', () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it('shows a heading above the list once a guess word is set', () => {
+  it('shows a heading with the bucket count above the list', () => {
+    const clues = [clue('adieu', 'stale'), clue('teils', 'stale')];
+    render(<BucketList wordLength={5} guessWord="stale" clues={clues} />);
+
+    const heading = screen.getByRole('heading', { level: 3 });
+    const buckets = screen.getAllByRole('listitem');
+    expect(heading).toHaveTextContent(`${buckets.length} Buckets of Possible Answers`);
+  });
+
+  it('singularizes "Bucket" when there is only one', () => {
     const clues = [clue('crane', 'crane')];
     render(<BucketList wordLength={5} guessWord="crane" clues={clues} />);
 
-    expect(screen.getByRole('heading', { level: 3 })).toHaveTextContent('Buckets of Possible Answers');
+    expect(screen.getByRole('heading', { level: 3 })).toHaveTextContent('1 Bucket of Possible Answers');
   });
 
   it('renders one item per distinct clue pattern the guess would produce', () => {
