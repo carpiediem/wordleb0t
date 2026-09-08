@@ -1,16 +1,23 @@
 interface HardModeToggleProps {
   checked: boolean;
+  disabled: boolean;
   onChange: (checked: boolean) => void;
 }
 
 // A hand-rolled switch rather than a UI-library one (see #45) - this repo has
 // no UI-library dependency anywhere else, preferring small custom components
 // styled to match its own CSS (e.g. GuessSelect over a native <select>).
-export function HardModeToggle({ checked, onChange }: HardModeToggleProps) {
+export function HardModeToggle({ checked, onChange, disabled }: HardModeToggleProps) {
   return (
     <span className="HardModeToggle">
       <label className="HardModeToggle-switch">
-        <input type="checkbox" role="switch" checked={checked} onChange={(e) => onChange(e.target.checked)} />
+        <input
+          type="checkbox"
+          role="switch"
+          checked={checked}
+          onChange={(e) => onChange(e.target.checked)}
+          disabled={disabled}
+        />
         <span className="HardModeToggle-track" aria-hidden="true">
           <span className="HardModeToggle-thumb" />
         </span>

@@ -203,7 +203,7 @@ function Game(props: GameProps) {
             value={wordLength}
             onChange={handleLengthChange}
           ></input>
-          <HardModeToggle checked={hardMode} onChange={handleHardModeChange} />
+          <HardModeToggle checked={hardMode} onChange={handleHardModeChange} disabled={guesses.length > 1} />
         </div>
         <table className="Game-rows" tabIndex={0} aria-label="Table of guesses" ref={tableRef}>
           <tbody>{tableRows}</tbody>

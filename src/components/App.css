@@ -513,6 +513,10 @@ a:active {
   background: #195272;
 }
 
+.HardModeToggle-switch input:disabled + .HardModeToggle-track {
+  background: #bbb;
+}
+
 .HardModeToggle-switch input:checked + .HardModeToggle-track .HardModeToggle-thumb {
   transform: translateX(1rem);
 }
