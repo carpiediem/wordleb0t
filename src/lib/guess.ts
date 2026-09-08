@@ -278,7 +278,12 @@ export type GuessOption = {
   usageRank?: number;
 };
 
-export function makeGuessOptions(wordLength: number, clues: CluedLetter[][] = [], maxGuesses?: number): GuessOption[] {
+export function makeGuessOptions(
+  wordLength: number,
+  clues: CluedLetter[][] = [],
+  maxGuesses?: number,
+  hardMode = false,
+): GuessOption[] {
   const re = toRegExp(clues);
 
   if (clues.length === 0 && typeof localStorage !== 'undefined' && localStorage.INITIAL_GUESS?.length === wordLength) {
@@ -303,17 +308,26 @@ export function makeGuessOptions(wordLength: number, clues: CluedLetter[][] = []
   // than any other non-candidate word (i.e. none), while every remaining
   // candidate has some chance. maxGuesses is optional (callers that aren't
   // tracking a guess limit, like the worksheet generator, can omit it), in
-  // which case there's no such cutoff.
+  // which case there's no such cutoff. A scout is also never a candidate
+  // itself (see scoutGuess/compareScouts above), so it can't reuse every
+  // known letter the way hard mode requires (see #45) - remaining already
+  // only holds words consistent with every clue so far, so rankGuess()
+  // alone always satisfies that requirement.
   const guessesLeft = maxGuesses === undefined ? Infinity : maxGuesses - clues.length;
-  const shouldScout = clues.length > 0 && remaining.length > SCOUT_MIN_REMAINING && guessesLeft > 1;
+  const shouldScout = !hardMode && clues.length > 0 && remaining.length > SCOUT_MIN_REMAINING && guessesLeft > 1;
 
   const guesses = shouldScout ? scoutGuess(wordLength, remaining, clues.length) : rankGuess(remaining, clues.length);
 
   return guesses.slice(0, 8);
 }
 
-export function makeGuess(wordLength: number, clues: CluedLetter[][] = [], maxGuesses?: number): string[] {
-  return makeGuessOptions(wordLength, clues, maxGuesses).map(({ word }) => word);
+export function makeGuess(
+  wordLength: number,
+  clues: CluedLetter[][] = [],
+  maxGuesses?: number,
+  hardMode = false,
+): string[] {
+  return makeGuessOptions(wordLength, clues, maxGuesses, hardMode).map(({ word }) => word);
 }
 
 export function countRemaining(wordLength: number, clues: CluedLetter[][] = []): number {

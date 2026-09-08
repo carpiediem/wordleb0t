@@ -118,6 +118,16 @@ describe('makeGuess', () => {
     expect(guesses.some((word) => !re.test(word))).toBe(true);
   });
 
+  it('never scouts in hard mode, even with a wide field and guesses to spare (#45)', () => {
+    // Same wide field that scouts a non-candidate guess above - hard mode
+    // instead restricts every guess to a real remaining candidate, since a
+    // scout can't reuse every known letter the way hard mode requires.
+    const clues = [clue('nervy', 'water')];
+    const guesses = makeGuess(5, clues, clues.length + 2, true);
+    const re = toRegExp(clues);
+    guesses.forEach((word) => expect(re.test(word)).toBe(true));
+  });
+
   it('uses localStorage.INITIAL_GUESS as the opening guess when it matches the word length', () => {
     localStorageMock.INITIAL_GUESS = 'slate';
     expect(makeGuess(5)).toEqual(['slate']);

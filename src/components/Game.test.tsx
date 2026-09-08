@@ -50,6 +50,21 @@ describe('Game', () => {
     expect(firstRowCells).toHaveLength(7);
   });
 
+  it('toggles hard mode on and off via the switch (#45)', () => {
+    render(<Game maxGuesses={6} />);
+
+    expect(screen.getByRole('switch')).not.toBeChecked();
+    expect(screen.getByText('Easy')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('switch'));
+    expect(screen.getByRole('switch')).toBeChecked();
+    expect(screen.getByText('Hard')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('switch'));
+    expect(screen.getByRole('switch')).not.toBeChecked();
+    expect(screen.getByText('Easy')).toBeInTheDocument();
+  });
+
   it("lets the user override the editing row's guess by picking another suggestion", () => {
     const { container } = render(<Game maxGuesses={6} />);
 
