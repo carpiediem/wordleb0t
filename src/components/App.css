@@ -228,13 +228,45 @@ body.dark .Row-count-label {
   width: 100px;
 }
 
+.BucketList-heading {
+  margin: 1.5em 0 0;
+  font-size: 0.75em;
+  font-weight: 600;
+  opacity: 0.7;
+}
+
 .BucketList {
   list-style: none;
-  margin: 0.5em 0 0;
+  margin: 0.25em 0 0;
   padding: 0;
-  max-height: 40vh;
+  max-height: 110px;
   overflow-y: auto;
-  width: 100%;
+  width: 120px;
+  /* A native scrollbar thumb only shows up while actively scrolling or
+     hovering (macOS's default setting, and Chrome 121+'s overlay scrollbars
+     on every desktop platform) - no CSS can force it to stay put, since
+     that auto-hide is the point of an overlay scrollbar. A pair of "scroll
+     shadow" gradients (Lea Verou's technique) gives a persistent affordance
+     instead: background-attachment: local scrolls the white fade with the
+     content (so it only shows at an edge that still has more list past it),
+     while background-attachment: scroll pins the shadow gradient behind it
+     to the viewport so it doesn't get scrolled out of view.
+     https://lea.verou.me/blog/2012/04/background-attachment-local/
+     The fade uses the page's own background color (#eeeeee, see body above)
+     rather than white, so the list blends into the page instead of reading
+     as a separate white card. */
+  background:
+    linear-gradient(#eeeeee 30%, rgba(238, 238, 238, 0)) center top,
+    linear-gradient(rgba(238, 238, 238, 0), #eeeeee 70%) center bottom,
+    radial-gradient(farthest-side at 50% 0, rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0)) center top,
+    radial-gradient(farthest-side at 50% 100%, rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0)) center bottom;
+  background-repeat: no-repeat;
+  background-size:
+    100% 20px,
+    100% 20px,
+    100% 8px,
+    100% 8px;
+  background-attachment: local, local, scroll, scroll;
 }
 
 .BucketList-bucket {

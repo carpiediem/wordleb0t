@@ -16,17 +16,20 @@ export function BucketList({ wordLength, guessWord, clues }: BucketListProps) {
   const buckets = getBuckets(wordLength, guessWord, clues);
 
   return (
-    <ul className="BucketList">
-      {buckets.map((bucket, index) => (
-        <li key={index} className="BucketList-bucket" title={bucket.words.join(', ')}>
-          <span className="BucketList-pattern">
-            {bucket.clues.map((letterClue, letterIndex) => (
-              <span key={letterIndex} className={`BucketList-tile ${clueClass(letterClue)}`} aria-hidden="true" />
-            ))}
-          </span>
-          <span className="BucketList-count">{bucket.words.length.toLocaleString()}</span>
-        </li>
-      ))}
-    </ul>
+    <div>
+      <h3 className="BucketList-heading">🪣 {buckets.length} Buckets of Possible Answers</h3>
+      <ul className="BucketList">
+        {buckets.map((bucket, index) => (
+          <li key={index} className="BucketList-bucket" title={bucket.words.join(', ')}>
+            <span className="BucketList-pattern">
+              {bucket.clues.map((letterClue, letterIndex) => (
+                <span key={letterIndex} className={`BucketList-tile ${clueClass(letterClue)}`} aria-hidden="true" />
+              ))}
+            </span>
+            <span className="BucketList-count">{bucket.words.length.toLocaleString()}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }

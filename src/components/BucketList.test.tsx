@@ -8,6 +8,13 @@ describe('BucketList', () => {
     expect(container).toBeEmptyDOMElement();
   });
 
+  it('shows a heading above the list once a guess word is set', () => {
+    const clues = [clue('crane', 'crane')];
+    render(<BucketList wordLength={5} guessWord="crane" clues={clues} />);
+
+    expect(screen.getByRole('heading', { level: 3 })).toHaveTextContent('Buckets of Possible Answers');
+  });
+
   it('renders one item per distinct clue pattern the guess would produce', () => {
     const clues = [clue('crane', 'crane')];
     render(<BucketList wordLength={5} guessWord="crane" clues={clues} />);

@@ -168,7 +168,7 @@ function Game(props: GameProps) {
         <div className="bubble">
           {gameState === GameState.Playing && (
             <>
-              <h2>I think it&apos;s</h2>
+              <h2>I&apos;ll guess</h2>
               <GuessSelect options={currentOptions} value={guesses[guesses.length - 1] || ''} onChange={handleSelect} />
             </>
           )}
