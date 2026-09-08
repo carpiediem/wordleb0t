@@ -2,7 +2,7 @@
 // covering every possible gray/yellow/green clue pattern for that guess,
 // paired with Wordleb0t's suggested next guess for each one.
 //
-// Usage: npm run worksheet -- <WORD> [outputPath]
+// Usage: npm run worksheet -- <WORD> [outputPath] [-hard]
 import { writeFileSync } from 'fs';
 import { Clue, CluedLetter } from '../lib/clue';
 import { makeGuess } from '../lib/guess';
@@ -29,16 +29,20 @@ const TILE_COLORS: Record<Clue, TileStyle> = {
 const SUGGESTION_TILE: TileStyle = { background: '#f6f6f6', border: '#999', text: '#333' };
 const BLANK_SUGGESTION_TILE: TileStyle = { background: '#e0e0e0', border: '#999', text: '#999' };
 
-function parseArgs(): { word: string; outputPath: string } {
-  const [, , rawWord, outputPath] = process.argv;
+function parseArgs(): { word: string; outputPath: string; hardMode: boolean } {
+  const args = process.argv.slice(2);
+  const hardMode = args.includes('-hard');
+  const [rawWord, outputPath] = args.filter((arg) => arg !== '-hard');
   if (!rawWord) {
-    throw new Error('Usage: npm run worksheet -- <WORD> [outputPath]');
+    throw new Error('Usage: npm run worksheet -- <WORD> [outputPath] [-hard]');
   }
   const word = rawWord.toLowerCase();
   if (!/^[a-z]+$/.test(word)) {
     throw new Error(`Word must be alphabetic: ${rawWord}`);
   }
-  return { word, outputPath: outputPath ?? `worksheet-${word}.svg` };
+  // Distinct default filenames for the two modes - otherwise generating one
+  // of each for the same word would silently overwrite one with the other.
+  return { word, outputPath: outputPath ?? `worksheet-${word}${hardMode ? '-hard' : ''}.svg`, hardMode };
 }
 
 // Every way to choose `k` items out of `n`, as index combinations in
@@ -177,9 +181,9 @@ function worksheetLayout(wordLength: number): {
   return { headerPatterns, topColumns, bottomColumns };
 }
 
-function suggestionFor(word: string, pattern: Clue[]): string | undefined {
+function suggestionFor(word: string, pattern: Clue[], hardMode: boolean): string | undefined {
   const row: CluedLetter[] = word.split('').map((letter, i) => ({ letter, clue: pattern[i] }));
-  return makeGuess(word.length, [row])[0];
+  return makeGuess(word.length, [row], undefined, hardMode)[0];
 }
 
 function escapeXml(text: string): string {
@@ -217,20 +221,21 @@ function renderColumns(
   top: number,
   cardOuterWidth: number,
   cardOuterHeight: number,
+  hardMode: boolean,
 ): string {
   return columns
     .flatMap((column, col) =>
       column.map((pattern, row) => {
         const x = MARGIN + col * cardOuterWidth;
         const y = top + row * cardOuterHeight;
-        const suggestion = suggestionFor(word, pattern);
+        const suggestion = suggestionFor(word, pattern, hardMode);
         return `<g transform="translate(${x}, ${y})">${renderCard(word, pattern, suggestion)}</g>`;
       }),
     )
     .join('\n');
 }
 
-function generateWorksheet(word: string): string {
+function generateWorksheet(word: string, hardMode: boolean): string {
   const wordLength = word.length;
   const { headerPatterns, topColumns, bottomColumns } = worksheetLayout(wordLength);
 
@@ -250,18 +255,18 @@ function generateWorksheet(word: string): string {
   const dividerY = topSectionTop + topSectionHeight + sectionGap / 2;
   const bottomSectionTop = dividerY + sectionGap / 2;
 
-  const topCards = renderColumns(word, topColumns, topSectionTop, cardOuterWidth, cardOuterHeight);
-  const bottomCards = renderColumns(word, bottomColumns, bottomSectionTop, cardOuterWidth, cardOuterHeight);
+  const topCards = renderColumns(word, topColumns, topSectionTop, cardOuterWidth, cardOuterHeight, hardMode);
+  const bottomCards = renderColumns(word, bottomColumns, bottomSectionTop, cardOuterWidth, cardOuterHeight, hardMode);
 
   // Lay the title text and the all-gray/all-yellow header cards out
   // left-to-right, tracking how far right they reach so the page is wide
   // enough to fit them.
-  const titleText = `Wordle First Guess Follow-ups: ${word.toUpperCase()}`;
+  const titleText = `Wordle First Guess Follow-ups: ${word.toUpperCase()}${hardMode ? ' (Hard Mode)' : ''}`;
   let cursorX = MARGIN + titleText.length * TITLE_FONT_SIZE * 0.6 + CARD_GAP_X;
 
   const headerCards = headerPatterns
     .map((pattern) => {
-      const suggestion = suggestionFor(word, pattern);
+      const suggestion = suggestionFor(word, pattern, hardMode);
       const x = cursorX;
       cursorX += cardOuterWidth;
       return `<g transform="translate(${x}, ${MARGIN + (headerHeight - cardHeight) / 2})">${renderCard(word, pattern, suggestion)}</g>`;
@@ -284,7 +289,7 @@ function generateWorksheet(word: string): string {
   ].join('\n');
 }
 
-const { word, outputPath } = parseArgs();
-const svg = generateWorksheet(word);
+const { word, outputPath, hardMode } = parseArgs();
+const svg = generateWorksheet(word, hardMode);
 writeFileSync(outputPath, svg);
 console.log(`Wrote ${outputPath}`);
