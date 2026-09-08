@@ -1,6 +1,7 @@
 import { ChangeEvent, useRef, useState, useEffect } from 'react';
 import { Row, RowState } from './Row';
 import { GuessSelect } from './GuessSelect';
+import { BucketList } from './BucketList';
 import { Clue, CluedLetter, foundReducer } from '../lib/clue';
 import { GuessOption, makeGuessOptions, countRemaining } from '../lib/guess';
 
@@ -167,7 +168,7 @@ function Game(props: GameProps) {
         <div className="bubble">
           {gameState === GameState.Playing && (
             <>
-              <h2>I think it&apos;s</h2>
+              <h2>I&apos;ll guess</h2>
               <GuessSelect options={currentOptions} value={guesses[guesses.length - 1] || ''} onChange={handleSelect} />
             </>
           )}
@@ -177,6 +178,11 @@ function Game(props: GameProps) {
           {gameState !== GameState.Playing && <button onClick={handleReset}>Let&apos;s play again</button>}
         </div>
         <img src="./bot.png" alt="bot" />
+        {gameState === GameState.Playing && (
+          <div className="BucketList-slot BucketList-slot-inline">
+            <BucketList wordLength={wordLength} guessWord={guesses[guesses.length - 1] || ''} clues={clues} />
+          </div>
+        )}
       </div>
       <div className="Game-container">
         <div className="Game-options">
@@ -202,6 +208,18 @@ function Game(props: GameProps) {
           </form>
         )}
       </div>
+      {gameState === GameState.Playing && (
+        // Duplicates the inline BucketList above rather than moving it - on
+        // an xs-width phone screen (see .BucketList-slot media query) it
+        // reads much better as the last thing on the page than squeezed into
+        // the bubble/bot/bucketlist row, but at every wider width it belongs
+        // right where it already is. Only one slot is ever visible at a time;
+        // getBuckets() is cheap enough (microseconds - see #43) that
+        // computing it twice isn't a concern.
+        <div className="BucketList-slot BucketList-slot-bottom">
+          <BucketList wordLength={wordLength} guessWord={guesses[guesses.length - 1] || ''} clues={clues} />
+        </div>
+      )}
     </>
   );
 }

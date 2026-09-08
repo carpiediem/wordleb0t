@@ -102,13 +102,22 @@ function score({ lettersRank, usageRank }: ScoredWord, guessIndex: number) {
   return dictionary.length - lettersRank + (usageRank === -1 ? 0 : 0.5 * guessIndex * (targets.length - usageRank));
 }
 
+// scoredWords.usageRank uses -1 as an internal "not a known target" sentinel;
+// GuessOption exposes that as a plain absent field instead, like its other
+// optional metadata.
+function presentableUsageRank(usageRank: number): number | undefined {
+  return usageRank === -1 ? undefined : usageRank;
+}
+
 // Ranks by the usual commonality/usage score, highest first.
 export function compareRanks(a: ScoredWord, b: ScoredWord, guessIndex: number): number {
   return score(b, guessIndex) - score(a, guessIndex);
 }
 
-function rankGuess(remaining: ScoredWord[], guessIndex: number): ScoredWord[] {
-  return [...remaining].sort((a, b) => compareRanks(a, b, guessIndex));
+function rankGuess(remaining: ScoredWord[], guessIndex: number): GuessOption[] {
+  return [...remaining]
+    .sort((a, b) => compareRanks(a, b, guessIndex))
+    .map(({ word, usageRank }) => ({ word, usageRank: presentableUsageRank(usageRank) }));
 }
 
 // Below this many remaining candidates, a "scout" guess (see below) can't
@@ -185,6 +194,7 @@ type ScoutCandidate = {
   bits: number;
   bucketCount: number;
   largestBucket: number;
+  usageRank?: number;
   isCandidate: boolean;
   scoredWord?: ScoredWord;
 };
@@ -239,13 +249,15 @@ function scoutGuess(wordLength: number, remaining: ScoredWord[], guessIndex: num
   const ranked = Array.from(pool)
     .map((word): ScoutCandidate => {
       const { bits, bucketCount, largestBucket } = entropy(word, remainingWords);
+      const scoredWord = scoredWordsByWord.get(word);
       return {
         word,
         bits,
         bucketCount,
         largestBucket,
+        usageRank: scoredWord && presentableUsageRank(scoredWord.usageRank),
         isCandidate: remainingSet.has(word),
-        scoredWord: scoredWordsByWord.get(word),
+        scoredWord,
       };
     })
     .sort((a, b) => compareScouts(a, b, guessIndex));
@@ -254,14 +266,16 @@ function scoutGuess(wordLength: number, remaining: ScoredWord[], guessIndex: num
   return ranked;
 }
 
-// A guess option, with the entropy-scouting metadata (see #34) present only
-// when it was chosen by scoutGuess - rankGuess's candidates don't have a
-// meaningful bucketCount/largestBucket, since they were never scored against
-// the remaining field that way.
+// A guess option. bucketCount/largestBucket (see #34) are present only when
+// it was scored against the remaining field that way - via scoutGuess, or
+// precomputed for a curated opening guess (see #41) - not for an ordinary
+// rankGuess candidate. usageRank (see #43) is absent for a word that isn't
+// itself a known NYT target, regardless of which ranking method chose it.
 export type GuessOption = {
   word: string;
   bucketCount?: number;
   largestBucket?: number;
+  usageRank?: number;
 };
 
 export function makeGuessOptions(wordLength: number, clues: CluedLetter[][] = [], maxGuesses?: number): GuessOption[] {
@@ -305,4 +319,46 @@ export function makeGuess(wordLength: number, clues: CluedLetter[][] = [], maxGu
 export function countRemaining(wordLength: number, clues: CluedLetter[][] = []): number {
   const re = toRegExp(clues);
   return wordsOfLength(wordLength).reduce((count, { word }) => (re.test(word) ? count + 1 : count), 0);
+}
+
+// The inverse of clueSignature: unpacks a signature back into the per-letter
+// clue sequence it was built from, most-significant (first letter) digit
+// first.
+function signatureToClue(signature: number, wordLength: number): Clue[] {
+  const letterClues: Clue[] = [];
+  let remainder = signature;
+  for (let i = 0; i < wordLength; i++) {
+    letterClues.unshift(remainder % 3);
+    remainder = Math.floor(remainder / 3);
+  }
+  return letterClues;
+}
+
+export type Bucket = {
+  clues: Clue[];
+  words: string[];
+};
+
+// Every distinct clue pattern `guessWord` could produce against the current
+// remaining candidates, and which candidates would produce it - the full
+// breakdown entropy()/scoutGuess() only ever summarize as bits/bucketCount/
+// largestBucket (see #43). Ordered largest bucket first, matching the
+// "worst case" framing largestBucket already uses elsewhere.
+export function getBuckets(wordLength: number, guessWord: string, clues: CluedLetter[][] = []): Bucket[] {
+  const re = toRegExp(clues);
+  const remaining = wordsOfLength(wordLength)
+    .filter(({ word }) => re.test(word))
+    .map(({ word }) => word);
+
+  const bucketsBySignature = new Map<number, string[]>();
+  for (const candidate of remaining) {
+    const signature = clueSignature(guessWord, candidate);
+    const words = bucketsBySignature.get(signature);
+    if (words) words.push(candidate);
+    else bucketsBySignature.set(signature, [candidate]);
+  }
+
+  return Array.from(bucketsBySignature.entries())
+    .map(([signature, words]) => ({ clues: signatureToClue(signature, wordLength), words: words.sort() }))
+    .sort((a, b) => b.words.length - a.words.length);
 }
