@@ -28,11 +28,26 @@ vi.mock('twitter-api-v2', () => ({
   ApiResponseError: MockApiResponseError,
 }));
 
+const blueskyLoginMock = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
+const blueskyPostMock = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
+const atpAgentConstructorMock = vi.hoisted(() => vi.fn());
+
+vi.mock('@atproto/api', () => ({
+  AtpAgent: class {
+    login = blueskyLoginMock;
+    post = blueskyPostMock;
+    constructor(...args: unknown[]) {
+      atpAgentConstructorMock(...args);
+    }
+  },
+}));
+
 import {
   buildStatus,
   describeError,
   fetchTodaysAnswer,
   main,
+  PostFailuresError,
   requireEnv,
   todayInNewYork,
   writeFailureSummary,
@@ -139,7 +154,16 @@ describe('writeFailureSummary', () => {
 
     writeFailureSummary(new MockApiResponseError({ title: 'Payment Required' }));
 
+    expect(readFileSync(summaryPath, 'utf8')).toContain('### Failed to post daily result');
     expect(readFileSync(summaryPath, 'utf8')).toContain('Payment Required');
+  });
+
+  it('names the platform in the heading when given one', () => {
+    process.env.GITHUB_STEP_SUMMARY = summaryPath;
+
+    writeFailureSummary(new Error('boom'), 'Bluesky');
+
+    expect(readFileSync(summaryPath, 'utf8')).toContain('### Failed to post to Bluesky');
   });
 
   it('does nothing outside of GitHub Actions', () => {
@@ -151,7 +175,14 @@ describe('writeFailureSummary', () => {
 
 describe('main', () => {
   const fetchMock = vi.fn();
-  const ENV_VARS = ['TWITTER_API_KEY', 'TWITTER_API_SECRET', 'TWITTER_ACCESS_TOKEN', 'TWITTER_ACCESS_TOKEN_SECRET'];
+  const ENV_VARS = [
+    'TWITTER_API_KEY',
+    'TWITTER_API_SECRET',
+    'TWITTER_ACCESS_TOKEN',
+    'TWITTER_ACCESS_TOKEN_SECRET',
+    'BLUESKY_IDENTIFIER',
+    'BLUESKY_APP_PASSWORD',
+  ];
 
   beforeEach(() => {
     vi.stubGlobal('fetch', fetchMock);
@@ -161,18 +192,22 @@ describe('main', () => {
     });
     ENV_VARS.forEach((name) => (process.env[name] = `${name}-value`));
     vi.spyOn(console, 'log').mockImplementation(() => {});
+    vi.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   afterEach(() => {
     vi.unstubAllGlobals();
     fetchMock.mockReset();
-    tweetMock.mockClear();
+    tweetMock.mockClear().mockResolvedValue(undefined);
     twitterApiConstructorMock.mockClear();
+    blueskyLoginMock.mockClear().mockResolvedValue(undefined);
+    blueskyPostMock.mockClear().mockResolvedValue(undefined);
+    atpAgentConstructorMock.mockClear();
     ENV_VARS.forEach((name) => delete process.env[name]);
     vi.restoreAllMocks();
   });
 
-  it('solves the day and tweets the result', async () => {
+  it('solves the day and posts the result to both X and Bluesky', async () => {
     await main();
 
     expect(twitterApiConstructorMock).toHaveBeenCalledWith({
@@ -186,5 +221,39 @@ describe('main', () => {
     expect(status).toMatch(/^Wordle 1234 \([A-Z][a-z]+ \d{1,2}, \d{4}\) \d\/6\n\n/);
     expect(status).toContain('#Wordle1234');
     expect(status).toContain('carpiediem.github.io/wordleb0t');
+
+    expect(atpAgentConstructorMock).toHaveBeenCalledWith({ service: 'https://bsky.social' });
+    expect(blueskyLoginMock).toHaveBeenCalledWith({
+      identifier: 'BLUESKY_IDENTIFIER-value',
+      password: 'BLUESKY_APP_PASSWORD-value',
+    });
+    expect(blueskyPostMock).toHaveBeenCalledWith({ text: status });
+  });
+
+  it('still posts to Bluesky, and reports only X, when X fails (#47)', async () => {
+    tweetMock.mockRejectedValue(new Error('X is down'));
+
+    const error = await main().catch((e) => e);
+
+    expect(error).toBeInstanceOf(PostFailuresError);
+    expect(error.message).toBe('Failed to post to: X');
+    expect(blueskyPostMock).toHaveBeenCalled();
+  });
+
+  it('still posts to X, and reports only Bluesky, when Bluesky fails (#47)', async () => {
+    blueskyLoginMock.mockRejectedValue(new Error('Bluesky is down'));
+
+    const error = await main().catch((e) => e);
+
+    expect(error).toBeInstanceOf(PostFailuresError);
+    expect(error.message).toBe('Failed to post to: Bluesky');
+    expect(tweetMock).toHaveBeenCalled();
+  });
+
+  it('reports both platforms when both fail', async () => {
+    tweetMock.mockRejectedValue(new Error('X is down'));
+    blueskyLoginMock.mockRejectedValue(new Error('Bluesky is down'));
+
+    await expect(main()).rejects.toThrow('Failed to post to: X, Bluesky');
   });
 });
