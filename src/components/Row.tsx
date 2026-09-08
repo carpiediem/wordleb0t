@@ -70,7 +70,12 @@ export function Row({
   });
 
   useEffect(() => {
-    if (isEmpty) setRowClues(Array.from(word).map((_, index) => (foundLetters[index] ? 2 : -1)));
+    // Only pre-fill green where this guess's own letter matches the known-correct
+    // letter for that position - a scout guess (see #31/#32) isn't guaranteed to
+    // repeat known-correct letters in their known positions, so foundLetters[index]
+    // being set isn't enough on its own. Never pre-fill yellow: knowing a letter is
+    // somewhere in the word doesn't tell us it's wrong at this position too.
+    if (isEmpty) setRowClues(Array.from(word).map((letter, index) => (letter === foundLetters[index] ? 2 : -1)));
   }, [word, foundLetters, isEmpty]);
 
   return (

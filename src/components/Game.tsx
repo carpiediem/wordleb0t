@@ -1,7 +1,10 @@
 import { ChangeEvent, useRef, useState, useEffect } from 'react';
 import { Row, RowState } from './Row';
+import { GuessSelect } from './GuessSelect';
+import { BucketList } from './BucketList';
+import { HardModeToggle } from './HardModeToggle';
 import { Clue, CluedLetter, foundReducer } from '../lib/clue';
-import { makeGuess, countRemaining } from '../lib/guess';
+import { GuessOption, makeGuessOptions, countRemaining } from '../lib/guess';
 
 declare const window: { ga: (action: string, options: Record<string, unknown>) => void };
 
@@ -18,19 +21,20 @@ interface GameProps {
 function Game(props: GameProps) {
   const [wordLength, setWordLength] = useState(5);
   const [gameState, setGameState] = useState(GameState.Playing);
-  const [currentOptions, setCurrentOptions] = useState<string[]>([]);
+  const [currentOptions, setCurrentOptions] = useState<GuessOption[]>([]);
   const [guesses, setGuesses] = useState<string[]>([]);
   const [clues, setClues] = useState<CluedLetter[][]>([]);
   const [optionCounts, setOptionCounts] = useState<number[]>([]);
   const [hint, setHint] = useState<string>("Tap the letters to check Wordlebot's guess");
   const [userWord, setUserWord] = useState('');
+  const [hardMode, setHardMode] = useState(false);
 
   const tableRef = useRef<HTMLTableElement>(null);
 
   let foundLetters = clues.reduce(foundReducer, []);
 
-  const handleSelect = (event: ChangeEvent<HTMLSelectElement>) => {
-    guesses.splice(-1, 1, event.target.value.toLowerCase());
+  const handleSelect = (word: string) => {
+    guesses.splice(-1, 1, word.toLowerCase());
     setGuesses([...guesses]);
   };
 
@@ -42,7 +46,7 @@ function Game(props: GameProps) {
 
     const nextClues = [...clues, rowClues];
     const isWon = rowClues.every(({ clue }) => clue === Clue.Correct);
-    const remainingOptions = makeGuess(wordLength, nextClues);
+    const remainingOptions = makeGuessOptions(wordLength, nextClues, props.maxGuesses, hardMode);
     const isLost = guesses.length === 6 || remainingOptions.length === 0;
 
     setOptionCounts((value) => [...value, countRemaining(wordLength, nextClues)]);
@@ -65,12 +69,11 @@ function Game(props: GameProps) {
       window.ga('send', {
         hitType: 'event',
         eventCategory: 'End',
-        // Every guess must itself satisfy every clue so far, so the
-        // candidate pool only shrinks or stays flat from one guess to the
-        // next; guessing wrong 6 times in a row without it hitting zero
-        // first doesn't happen in practice (confirmed via an exhaustive/
-        // randomized search through every legally-reachable 6-guess
-        // sequence) - this is effectively always 'loss - no match'.
+        // Scouting narrows the field aggressively enough now that guessing
+        // wrong 6 times in a row without exhausting every remaining candidate
+        // first doesn't happen in practice (confirmed via npm run test:nyt
+        // and an exhaustive/randomized search through every legally-reachable
+        // 6-guess sequence) - this is effectively always 'loss - no match'.
         /* v8 ignore next */
         eventAction: guesses.length === 6 ? 'loss - six guesses' : 'loss - no match',
         eventLabel: guesses.length,
@@ -94,7 +97,7 @@ function Game(props: GameProps) {
     // currentOptions was left over from the row just undone - without this,
     // the dropdown would still offer the *next* guess's options instead of
     // the ones valid at this point (#37).
-    setCurrentOptions(makeGuess(wordLength, previousClues));
+    setCurrentOptions(makeGuessOptions(wordLength, previousClues, undefined, hardMode));
   };
 
   const handleReset = () => {
@@ -102,8 +105,13 @@ function Game(props: GameProps) {
     setGuesses([]);
     setClues([]);
     setOptionCounts([]);
-    setCurrentOptions(makeGuess(wordLength));
+    setCurrentOptions(makeGuessOptions(wordLength, [], undefined, hardMode));
     setGameState(GameState.Playing);
+  };
+
+  const handleHardModeChange = (checked: boolean) => {
+    setHardMode(checked);
+    setCurrentOptions(makeGuessOptions(wordLength, clues, props.maxGuesses, checked));
   };
 
   const handleLengthChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -129,7 +137,7 @@ function Game(props: GameProps) {
 
   useEffect(() => {
     if (guesses.length > clues.length) return;
-    setGuesses((state = []) => (currentOptions.length ? [...state, currentOptions[0]] : state));
+    setGuesses((state = []) => (currentOptions.length ? [...state, currentOptions[0].word] : state));
   }, [currentOptions, guesses.length, clues.length]);
 
   const tableRows = Array(props.maxGuesses)
@@ -167,12 +175,8 @@ function Game(props: GameProps) {
         <div className="bubble">
           {gameState === GameState.Playing && (
             <>
-              <h2>I think it&apos;s</h2>
-              <select onChange={handleSelect}>
-                {currentOptions.map((word) => (
-                  <option key={word}>{word.toUpperCase()}</option>
-                ))}
-              </select>
+              <h2>I&apos;ll guess</h2>
+              <GuessSelect options={currentOptions} value={guesses[guesses.length - 1] || ''} onChange={handleSelect} />
             </>
           )}
 
@@ -181,19 +185,27 @@ function Game(props: GameProps) {
           {gameState !== GameState.Playing && <button onClick={handleReset}>Let&apos;s play again</button>}
         </div>
         <img src="./bot.png" alt="bot" />
+        {gameState === GameState.Playing && (
+          <div className="BucketList-slot BucketList-slot-inline">
+            <BucketList wordLength={wordLength} guessWord={guesses[guesses.length - 1] || ''} clues={clues} />
+          </div>
+        )}
       </div>
       <div className="Game-container">
         <div className="Game-options">
-          <label htmlFor="wordLength">Letters:</label>
-          <input
-            type="range"
-            min="4"
-            max="11"
-            id="wordLength"
-            disabled={guesses.length > 1}
-            value={wordLength}
-            onChange={handleLengthChange}
-          ></input>
+          <span>
+            <label htmlFor="wordLength">Letters:</label>
+            <input
+              type="range"
+              min="4"
+              max="11"
+              id="wordLength"
+              disabled={guesses.length > 1}
+              value={wordLength}
+              onChange={handleLengthChange}
+            ></input>
+          </span>
+          <HardModeToggle checked={hardMode} onChange={handleHardModeChange} disabled={guesses.length > 1} />
         </div>
         <table className="Game-rows" tabIndex={0} aria-label="Table of guesses" ref={tableRef}>
           <tbody>{tableRows}</tbody>
@@ -206,6 +218,18 @@ function Game(props: GameProps) {
           </form>
         )}
       </div>
+      {gameState === GameState.Playing && (
+        // Duplicates the inline BucketList above rather than moving it - on
+        // an xs-width phone screen (see .BucketList-slot media query) it
+        // reads much better as the last thing on the page than squeezed into
+        // the bubble/bot/bucketlist row, but at every wider width it belongs
+        // right where it already is. Only one slot is ever visible at a time;
+        // getBuckets() is cheap enough (microseconds - see #43) that
+        // computing it twice isn't a concern.
+        <div className="BucketList-slot BucketList-slot-bottom">
+          <BucketList wordLength={wordLength} guessWord={guesses[guesses.length - 1] || ''} clues={clues} />
+        </div>
+      )}
     </>
   );
 }

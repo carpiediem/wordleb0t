@@ -50,15 +50,30 @@ describe('Game', () => {
     expect(firstRowCells).toHaveLength(7);
   });
 
+  it('toggles hard mode on and off via the switch (#45)', () => {
+    render(<Game maxGuesses={6} />);
+
+    expect(screen.getByRole('switch')).not.toBeChecked();
+    expect(screen.getByText('Easy')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('switch'));
+    expect(screen.getByRole('switch')).toBeChecked();
+    expect(screen.getByText('Hard')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('switch'));
+    expect(screen.getByRole('switch')).not.toBeChecked();
+    expect(screen.getByText('Easy')).toBeInTheDocument();
+  });
+
   it("lets the user override the editing row's guess by picking another suggestion", () => {
     const { container } = render(<Game maxGuesses={6} />);
 
-    const select = container.querySelector('select')!;
-    const options = Array.from(select.querySelectorAll('option')).map((option) => option.textContent!);
-    expect(options.length).toBeGreaterThan(1);
-    const alternative = options[1];
-
-    fireEvent.change(select, { target: { value: alternative } });
+    fireEvent.click(screen.getByRole('button', { name: makeGuess(5)[0].toUpperCase() }));
+    // Curated opening guesses (see #41) always carry metadata, so an option's
+    // full textContent includes its subtitle - pull just the word itself.
+    const alternativeOption = screen.getAllByRole('option')[1];
+    const alternative = alternativeOption.querySelector('.GuessSelect-option-word')!.textContent!;
+    fireEvent.click(alternativeOption);
 
     const row = editingRow(container);
     const displayedWord = Array.from(row.querySelectorAll('.Row-letter'))
