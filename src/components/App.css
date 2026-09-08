@@ -444,7 +444,7 @@ a:active {
 .Game-options {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   margin-bottom: 1rem;
 }
 
@@ -454,6 +454,81 @@ a:active {
 
 .Game-options button {
   min-width: 4rem;
+}
+
+.HardModeToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.HardModeToggle-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.HardModeToggle-switch input {
+  /* The checkbox stays in the DOM (and keyboard/screen-reader focusable) for
+     accessibility, but .HardModeToggle-track below draws the actual visible
+     switch, so the native control itself is invisibly overlaid on it. A
+     z-index is required for that overlay to actually receive clicks/taps -
+     without one, the track (a later, unpositioned sibling) paints on top of
+     this positioned-but-offscreen-looking input and silently swallows every
+     pointer event aimed at it. */
+  position: absolute;
+  z-index: 1;
+  opacity: 0;
+  width: 2.2rem;
+  height: 1.2rem;
+  margin: 0;
+  cursor: pointer;
+}
+
+.HardModeToggle-track {
+  position: relative;
+  display: inline-block;
+  width: 2.2rem;
+  height: 1.2rem;
+  background: #bbb;
+  border-radius: 1rem;
+  transition: background-color 0.15s ease;
+}
+
+.HardModeToggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 1rem;
+  height: 1rem;
+  background: white;
+  border-radius: 50%;
+  transition: transform 0.15s ease;
+}
+
+.HardModeToggle-switch input:checked + .HardModeToggle-track {
+  background: #195272;
+}
+
+.HardModeToggle-switch input:disabled + .HardModeToggle-track {
+  background: #bbb;
+}
+
+.HardModeToggle-switch input:checked + .HardModeToggle-track .HardModeToggle-thumb {
+  transform: translateX(1rem);
+}
+
+.HardModeToggle-switch input:focus-visible + .HardModeToggle-track {
+  outline: 2px solid #195272;
+  outline-offset: 2px;
+}
+
+.HardModeToggle-info {
+  cursor: help;
+  opacity: 0.7;
 }
 
 .App-footer {

@@ -2,6 +2,7 @@ import { ChangeEvent, useRef, useState, useEffect } from 'react';
 import { Row, RowState } from './Row';
 import { GuessSelect } from './GuessSelect';
 import { BucketList } from './BucketList';
+import { HardModeToggle } from './HardModeToggle';
 import { Clue, CluedLetter, foundReducer } from '../lib/clue';
 import { GuessOption, makeGuessOptions, countRemaining } from '../lib/guess';
 
@@ -26,6 +27,7 @@ function Game(props: GameProps) {
   const [optionCounts, setOptionCounts] = useState<number[]>([]);
   const [hint, setHint] = useState<string>("Tap the letters to check Wordlebot's guess");
   const [userWord, setUserWord] = useState('');
+  const [hardMode, setHardMode] = useState(false);
 
   const tableRef = useRef<HTMLTableElement>(null);
 
@@ -44,7 +46,7 @@ function Game(props: GameProps) {
 
     const nextClues = [...clues, rowClues];
     const isWon = rowClues.every(({ clue }) => clue === Clue.Correct);
-    const remainingOptions = makeGuessOptions(wordLength, nextClues, props.maxGuesses);
+    const remainingOptions = makeGuessOptions(wordLength, nextClues, props.maxGuesses, hardMode);
     const isLost = guesses.length === 6 || remainingOptions.length === 0;
 
     setOptionCounts((value) => [...value, countRemaining(wordLength, nextClues)]);
@@ -95,7 +97,7 @@ function Game(props: GameProps) {
     // currentOptions was left over from the row just undone - without this,
     // the dropdown would still offer the *next* guess's options instead of
     // the ones valid at this point (#37).
-    setCurrentOptions(makeGuessOptions(wordLength, previousClues));
+    setCurrentOptions(makeGuessOptions(wordLength, previousClues, undefined, hardMode));
   };
 
   const handleReset = () => {
@@ -103,8 +105,13 @@ function Game(props: GameProps) {
     setGuesses([]);
     setClues([]);
     setOptionCounts([]);
-    setCurrentOptions(makeGuessOptions(wordLength));
+    setCurrentOptions(makeGuessOptions(wordLength, [], undefined, hardMode));
     setGameState(GameState.Playing);
+  };
+
+  const handleHardModeChange = (checked: boolean) => {
+    setHardMode(checked);
+    setCurrentOptions(makeGuessOptions(wordLength, clues, props.maxGuesses, checked));
   };
 
   const handleLengthChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -186,16 +193,19 @@ function Game(props: GameProps) {
       </div>
       <div className="Game-container">
         <div className="Game-options">
-          <label htmlFor="wordLength">Letters:</label>
-          <input
-            type="range"
-            min="4"
-            max="11"
-            id="wordLength"
-            disabled={guesses.length > 1}
-            value={wordLength}
-            onChange={handleLengthChange}
-          ></input>
+          <span>
+            <label htmlFor="wordLength">Letters:</label>
+            <input
+              type="range"
+              min="4"
+              max="11"
+              id="wordLength"
+              disabled={guesses.length > 1}
+              value={wordLength}
+              onChange={handleLengthChange}
+            ></input>
+          </span>
+          <HardModeToggle checked={hardMode} onChange={handleHardModeChange} disabled={guesses.length > 1} />
         </div>
         <table className="Game-rows" tabIndex={0} aria-label="Table of guesses" ref={tableRef}>
           <tbody>{tableRows}</tbody>
