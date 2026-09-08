@@ -19,6 +19,12 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: './src/setupTests.ts',
+    // Above the 5000ms default: a few Game.test.tsx cases drive a full
+    // 6-guess loss (each guess recomputing rankGuess/scoutGuess and now also
+    // BucketList's per-render getBuckets()), which comfortably clears 5000ms
+    // locally (~1.2s) but has intermittently timed out in CI on a slower or
+    // more contended runner.
+    testTimeout: 15000,
     // Runs separately, via `npm run test:nyt` - it's slow, and only relevant when
     // guess.ts or its dependencies change (see .github/workflows/nyt-answers.yml).
     exclude: [...configDefaults.exclude, 'src/lib/nytAnswers.test.ts'],
