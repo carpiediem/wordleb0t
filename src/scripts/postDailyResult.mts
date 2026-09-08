@@ -3,7 +3,7 @@
 //
 // Usage: npm run post:daily-result
 import { appendFileSync } from 'fs';
-import { AtpAgent } from '@atproto/api';
+import { AtpAgent, RichText } from '@atproto/api';
 import { ApiResponseError, TwitterApi } from 'twitter-api-v2';
 import { solve, stepsToEmojiGrid } from '../lib/solve';
 
@@ -82,7 +82,16 @@ async function postToBluesky(status: string): Promise<void> {
     identifier: requireEnv('BLUESKY_IDENTIFIER'),
     password: requireEnv('BLUESKY_APP_PASSWORD'),
   });
-  await agent.post({ text: status });
+
+  // Bluesky posts are plain text - a URL or #hashtag only renders as a link
+  // unless the post also carries a "facet" (a byte-range annotation), which
+  // the official app adds automatically as you type but the raw API does
+  // not. detectFacetsWithoutResolution() finds them from the text alone
+  // (no network round-trip needed, unlike detectFacets(), since there are no
+  // @mentions here to resolve to a DID).
+  const richText = new RichText({ text: status });
+  richText.detectFacetsWithoutResolution();
+  await agent.post({ text: richText.text, facets: richText.facets });
 }
 
 // Thrown by main() once every platform has been attempted, if at least one

@@ -32,7 +32,10 @@ const blueskyLoginMock = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
 const blueskyPostMock = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
 const atpAgentConstructorMock = vi.hoisted(() => vi.fn());
 
-vi.mock('@atproto/api', () => ({
+vi.mock('@atproto/api', async (importOriginal) => ({
+  // RichText is real (pure text/facet logic, no network calls) - only
+  // AtpAgent itself is mocked out, so facet-detection is exercised for real.
+  ...(await importOriginal<typeof import('@atproto/api')>()),
   AtpAgent: class {
     login = blueskyLoginMock;
     post = blueskyPostMock;
@@ -227,7 +230,21 @@ describe('main', () => {
       identifier: 'BLUESKY_IDENTIFIER-value',
       password: 'BLUESKY_APP_PASSWORD-value',
     });
-    expect(blueskyPostMock).toHaveBeenCalledWith({ text: status });
+    // The bare "carpiediem.github.io/wordleb0t" and "#Wordle1234" in the post
+    // text only render as clickable in Bluesky's app when the post carries a
+    // matching facet - RichText.detectFacetsWithoutResolution() should have
+    // found both (see the linked bsky.app post that prompted this).
+    expect(blueskyPostMock).toHaveBeenCalledWith({
+      text: status,
+      facets: expect.arrayContaining([
+        expect.objectContaining({
+          features: [{ $type: 'app.bsky.richtext.facet#link', uri: 'https://carpiediem.github.io/wordleb0t' }],
+        }),
+        expect.objectContaining({
+          features: [{ $type: 'app.bsky.richtext.facet#tag', tag: 'Wordle1234' }],
+        }),
+      ]),
+    });
   });
 
   it('still posts to Bluesky, and reports only X, when X fails (#47)', async () => {
