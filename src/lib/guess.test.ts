@@ -5,10 +5,12 @@ import {
   compareRanks,
   compareScouts,
   countRemaining,
+  getBuckets,
   makeGuess,
   makeGuessOptions,
   toRegExp,
 } from './guess';
+import { Clue } from './clue';
 
 describe('toRegExp', () => {
   it('matches anything when there are no clues', () => {
@@ -253,6 +255,50 @@ describe('compareRanks', () => {
     const nonTarget = { word: 'a', lettersRank: 0, usageRank: -1 };
     const target = { word: 'b', lettersRank: 0, usageRank: 0 };
     expect(compareRanks(nonTarget, target, 1)).toBeGreaterThan(0);
+  });
+});
+
+describe('getBuckets', () => {
+  it('groups every remaining word by the clue pattern the guess would give it', () => {
+    const buckets = getBuckets(5, 'crane');
+    const remaining = countRemaining(5);
+
+    const totalWords = buckets.reduce((sum, { words }) => sum + words.length, 0);
+    expect(totalWords).toBe(remaining);
+  });
+
+  it('orders buckets largest first', () => {
+    const buckets = getBuckets(5, 'crane');
+    for (let i = 1; i < buckets.length; i++) {
+      expect(buckets[i].words.length).toBeLessThanOrEqual(buckets[i - 1].words.length);
+    }
+  });
+
+  it("gives every bucket's clue pattern the same length as the guess word", () => {
+    const buckets = getBuckets(5, 'crane');
+    buckets.forEach(({ clues }) => expect(clues).toHaveLength(5));
+  });
+
+  it('marks the all-correct bucket when the guess itself is the only remaining candidate', () => {
+    const clues = [clue('crane', 'crane')];
+    const buckets = getBuckets(5, 'crane', clues);
+
+    expect(buckets).toEqual([{ clues: Array(5).fill(Clue.Correct), words: ['crane'] }]);
+  });
+
+  it('respects the clues given so far when narrowing the remaining field', () => {
+    const clues = [clue('adieu', 'stale')];
+    const withClues = getBuckets(5, 'crane', clues);
+    const withoutClues = getBuckets(5, 'crane');
+
+    const totalWithClues = withClues.reduce((sum, { words }) => sum + words.length, 0);
+    const totalWithoutClues = withoutClues.reduce((sum, { words }) => sum + words.length, 0);
+    expect(totalWithClues).toBeLessThan(totalWithoutClues);
+  });
+
+  it('sorts the words within a bucket', () => {
+    const buckets = getBuckets(5, 'crane');
+    buckets.forEach(({ words }) => expect(words).toEqual([...words].sort()));
   });
 });
 

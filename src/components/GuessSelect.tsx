@@ -56,7 +56,8 @@ export function GuessSelect({ options, value, onChange }: GuessSelectProps) {
         <ul className="GuessSelect-options" role="listbox">
           {options.map((option) => {
             const isSelected = option.word === value;
-            const hasMetadata = option.bucketCount !== undefined && option.largestBucket !== undefined;
+            const hasBucketMetadata = option.bucketCount !== undefined && option.largestBucket !== undefined;
+            const hasUsageRank = option.usageRank !== undefined;
 
             return (
               <li
@@ -70,15 +71,23 @@ export function GuessSelect({ options, value, onChange }: GuessSelectProps) {
                   {isSelected && <span aria-hidden="true">✓ </span>}
                   {option.word.toUpperCase()}
                 </div>
-                {hasMetadata && (
-                  <div
-                    className="GuessSelect-option-meta"
-                    title={`Splits the remaining words into ${option.bucketCount!.toLocaleString()} groups; worst case, ${option.largestBucket!.toLocaleString()} words are left`}
-                  >
-                    <span>
-                      🪣 {option.bucketCount!.toLocaleString()} {option.bucketCount === 1 ? 'group' : 'groups'}
-                    </span>
-                    <span>📉 ≤{option.largestBucket!.toLocaleString()} words left</span>
+                {(hasBucketMetadata || hasUsageRank) && (
+                  <div className="GuessSelect-option-meta">
+                    {hasBucketMetadata && (
+                      <span
+                        title={`Splits the remaining words into ${option.bucketCount!.toLocaleString()} groups; worst case, ${option.largestBucket!.toLocaleString()} words are left`}
+                      >
+                        🪣 {option.bucketCount!.toLocaleString()}
+                      </span>
+                    )}
+                    {hasBucketMetadata && (
+                      <span title="Worst-case words left">📉 {option.largestBucket!.toLocaleString()}</span>
+                    )}
+                    {hasUsageRank && (
+                      <span title="Usage ranking among real Wordle answers">
+                        🎯 {(option.usageRank! + 1).toLocaleString()}
+                      </span>
+                    )}
                   </div>
                 )}
               </li>

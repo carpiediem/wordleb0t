@@ -228,6 +228,42 @@ body.dark .Row-count-label {
   width: 100px;
 }
 
+.BucketList {
+  list-style: none;
+  margin: 0.5em 0 0;
+  padding: 0;
+  max-height: 40vh;
+  overflow-y: auto;
+  width: 100%;
+}
+
+.BucketList-bucket {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+  padding: 0.15em 0;
+}
+
+.BucketList-pattern {
+  display: flex;
+  gap: 2px;
+}
+
+.BucketList-tile {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+.BucketList-count {
+  font-size: 0.8em;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.8;
+  min-width: 2em;
+  text-align: left;
+}
+
 .Bot-container button {
   cursor: pointer;
   background-color: #195272;

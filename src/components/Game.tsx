@@ -1,6 +1,7 @@
 import { ChangeEvent, useRef, useState, useEffect } from 'react';
 import { Row, RowState } from './Row';
 import { GuessSelect } from './GuessSelect';
+import { BucketList } from './BucketList';
 import { Clue, CluedLetter, foundReducer } from '../lib/clue';
 import { GuessOption, makeGuessOptions, countRemaining } from '../lib/guess';
 
@@ -177,6 +178,9 @@ function Game(props: GameProps) {
           {gameState !== GameState.Playing && <button onClick={handleReset}>Let&apos;s play again</button>}
         </div>
         <img src="./bot.png" alt="bot" />
+        {gameState === GameState.Playing && (
+          <BucketList wordLength={wordLength} guessWord={guesses[guesses.length - 1] || ''} clues={clues} />
+        )}
       </div>
       <div className="Game-container">
         <div className="Game-options">
