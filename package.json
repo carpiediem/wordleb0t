@@ -47,7 +47,7 @@
     "freqs": "node src/scripts/getFrequencies.js > src/data/frequencies.json",
     "rank": "node src/scripts/rankDictionary.js > src/data/dictionary-ranked.json",
     "worksheet": "tsx src/scripts/generateWorksheet.ts",
-    "post:daily-result": "tsx src/scripts/postDailyResult.ts",
+    "post:daily-result": "tsx src/scripts/postDailyResult.mts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint src",

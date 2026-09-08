@@ -51,7 +51,7 @@ import {
   requireEnv,
   todayInNewYork,
   writeFailureSummary,
-} from './postDailyResult';
+} from './postDailyResult.mts';
 
 describe('todayInNewYork', () => {
   it('returns an ISO-formatted date', () => {

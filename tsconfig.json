@@ -14,6 +14,12 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
+    // Lets postDailyResult.test.ts import postDailyResult.mts by its full
+    // extension - that file is .mts (rather than .ts) specifically so
+    // Node/tsx always treat it as ESM regardless of package.json's default
+    // CommonJS "type", which @atproto/api (an ESM-only dependency, see #47)
+    // requires. Safe only alongside noEmit, which is already set above.
+    "allowImportingTsExtensions": true,
     "jsx": "react-jsx",
     "useDefineForClassFields": true,
     "types": ["vite/client", "vitest/globals"]
