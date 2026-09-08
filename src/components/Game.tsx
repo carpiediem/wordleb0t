@@ -179,7 +179,9 @@ function Game(props: GameProps) {
         </div>
         <img src="./bot.png" alt="bot" />
         {gameState === GameState.Playing && (
-          <BucketList wordLength={wordLength} guessWord={guesses[guesses.length - 1] || ''} clues={clues} />
+          <div className="BucketList-slot BucketList-slot-inline">
+            <BucketList wordLength={wordLength} guessWord={guesses[guesses.length - 1] || ''} clues={clues} />
+          </div>
         )}
       </div>
       <div className="Game-container">
@@ -206,6 +208,18 @@ function Game(props: GameProps) {
           </form>
         )}
       </div>
+      {gameState === GameState.Playing && (
+        // Duplicates the inline BucketList above rather than moving it - on
+        // an xs-width phone screen (see .BucketList-slot media query) it
+        // reads much better as the last thing on the page than squeezed into
+        // the bubble/bot/bucketlist row, but at every wider width it belongs
+        // right where it already is. Only one slot is ever visible at a time;
+        // getBuckets() is cheap enough (microseconds - see #43) that
+        // computing it twice isn't a concern.
+        <div className="BucketList-slot BucketList-slot-bottom">
+          <BucketList wordLength={wordLength} guessWord={guesses[guesses.length - 1] || ''} clues={clues} />
+        </div>
+      )}
     </>
   );
 }

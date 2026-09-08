@@ -65,14 +65,14 @@ describe('GuessSelect', () => {
 
     expect(screen.queryByText(/🪣/)).not.toBeInTheDocument();
     expect(screen.queryByText(/📉/)).not.toBeInTheDocument();
-    expect(screen.queryByText(/🎯/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/🧮/)).not.toBeInTheDocument();
   });
 
   it('shows the usage-rank stat, 1-indexed, independent of bucket metadata', () => {
     render(<GuessSelect options={[{ word: 'slate', usageRank: 4 }]} value="slate" onChange={() => {}} />);
     fireEvent.click(screen.getByRole('button'));
 
-    expect(screen.getByRole('option')).toHaveTextContent('🎯 5');
+    expect(screen.getByRole('option')).toHaveTextContent('🧮 #5');
     expect(screen.queryByText(/🪣/)).not.toBeInTheDocument();
   });
 

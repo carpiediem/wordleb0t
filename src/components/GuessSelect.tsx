@@ -83,7 +83,7 @@ export function GuessSelect({ options, value, onChange }: GuessSelectProps) {
                     {hasBucketMetadata && (
                       <span title="Worst-case words left">📉 {option.largestBucket!.toLocaleString()}</span>
                     )}
-                    {hasUsageRank && <span title="Usage ranking">🎯 #{(option.usageRank! + 1).toLocaleString()}</span>}
+                    {hasUsageRank && <span title="Usage ranking">🧮 #{(option.usageRank! + 1).toLocaleString()}</span>}
                   </div>
                 )}
               </li>

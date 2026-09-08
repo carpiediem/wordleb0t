@@ -16,8 +16,10 @@ export function BucketList({ wordLength, guessWord, clues }: BucketListProps) {
   const buckets = getBuckets(wordLength, guessWord, clues);
 
   return (
-    <div>
-      <h3 className="BucketList-heading">🪣 {buckets.length} Buckets of Possible Answers</h3>
+    <>
+      <h3 className="BucketList-heading">
+        🪣 {buckets.length} Bucket{buckets.length === 1 ? '' : 's'} of Possible Answers
+      </h3>
       <ul className="BucketList">
         {buckets.map((bucket, index) => (
           <li key={index} className="BucketList-bucket" title={bucket.words.join(', ')}>
@@ -30,6 +32,6 @@ export function BucketList({ wordLength, guessWord, clues }: BucketListProps) {
           </li>
         ))}
       </ul>
-    </div>
+    </>
   );
 }
