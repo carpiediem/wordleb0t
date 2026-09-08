@@ -193,16 +193,18 @@ function Game(props: GameProps) {
       </div>
       <div className="Game-container">
         <div className="Game-options">
-          <label htmlFor="wordLength">Letters:</label>
-          <input
-            type="range"
-            min="4"
-            max="11"
-            id="wordLength"
-            disabled={guesses.length > 1}
-            value={wordLength}
-            onChange={handleLengthChange}
-          ></input>
+          <span>
+            <label htmlFor="wordLength">Letters:</label>
+            <input
+              type="range"
+              min="4"
+              max="11"
+              id="wordLength"
+              disabled={guesses.length > 1}
+              value={wordLength}
+              onChange={handleLengthChange}
+            ></input>
+          </span>
           <HardModeToggle checked={hardMode} onChange={handleHardModeChange} disabled={guesses.length > 1} />
         </div>
         <table className="Game-rows" tabIndex={0} aria-label="Table of guesses" ref={tableRef}>
